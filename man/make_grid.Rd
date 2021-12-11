@@ -19,32 +19,48 @@ make_grid(
 
 \item{cell_height}{The height of cells.}
 
-\item{var_names}{A list (or vector) of variable names to keep on cells. Variables area computed using the average of features (polygons or lines) that
-over each cell. It try to match each variable name (ignoring case) in the study area.}
+\item{var_names}{A list (or vector) of variable names to keep on cells. Variables area computed using
+the average of features (polygons or lines) that over each cell. It try to match each variable name
+(ignoring case) in the study area.}
 
-\item{centroid}{A boolean indicating if x_centroid and y_centroid variables must be computed and appended to variables./}
+\item{centroid}{A boolean indicating if x_centroid and y_centroid variables must be computed and appended
+to variables./}
 }
 \value{
-A SpatialPolygonsDataFrame with cells covering the study area. The dataframe contains the variables matched e computed acoording to each cell.
+A SpatialPolygonsDataFrame with cells covering the study area. The dataframe contains the variables
+matched e computed acoording to each cell.
 }
 \description{
 Make a grid over study area.
 }
 \examples{
 \dontrun{
-SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = FALSE)
-SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = FALSE)
+SPDF <- readOGR(
+   system.file("brasil_uf.gpkg", package="sdmTools"),
+   layer = "brasil_uf",
+   verbose = FALSE
+ )
+SLDF <- readOGR(
+   system.file("hydro_uper_prpy.gpkg", package="sdmTools"),
+   layer = "hydro_uper_prpy",
+   verbose = FALSE
+ )
 
-#gridded_area <- make_grid(SLDF, cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
+gridded_area <- SLDF \%>\%
+   make_grid(cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
 
-#gridded_area
+gridded_area \%>\% plot()
 
-#gridded_area <- make_grid(SPDF, cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
+gridded_area <- SPDF \%>\%
+   make_grid(cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
 
-#gridded_area
+gridded_area \%>\% plot()
 
 new_sdm_area <- sdm_area(SPDF)
 
-#gridded_area < make_grid(new_sdm_area, cell_width = 50000, cell_height = 50000, centroid=T)
+gridded_area < new_sdm_area \%>\%
+   make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+
+gridded_area \%>\% plot()
 }
 }

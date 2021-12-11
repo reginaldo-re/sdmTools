@@ -145,23 +145,27 @@ areas_gt <- function(an_area, lower_bound = 0){
   UseMethod("areas_gt")
 }
 
+#' @export
 areas_gt.default <- function(an_area, lower_bound = 0) {
     warning("Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
     return(an_area)
 }
 
+#' @export
 areas_gt.SpatialPolygons <- function(an_area, lower_bound = 0) {
   an_area %>%
     .sf_areas_gt(lower_bound) %>%
     return()
 }
 
+#' @export
 areas_gt.SpatialPolygonsDataFrame <- function(an_area, lower_bound = 0) {
   an_area %>%
     .sf_areas_gt(lower_bound) %>%
     return()
 }
 
+#' @export
 areas_gt.SDM_area <- function(an_area, lower_bound = 0) {
   an_area$study_area <- an_area$study_area %>%
     .sf_areas_gt(lower_bound)
@@ -173,39 +177,59 @@ areas_gt.SDM_area <- function(an_area, lower_bound = 0) {
 #' @param an_area A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.
 #' @param cell_width The width of cells.
 #' @param cell_height The height of cells.
-#' @param var_names A list (or vector) of variable names to keep on cells. Variables area computed using the average of features (polygons or lines) that
-#' over each cell. It try to match each variable name (ignoring case) in the study area.
-#' @param centroid A boolean indicating if x_centroid and y_centroid variables must be computed and appended to variables./
+#' @param var_names A list (or vector) of variable names to keep on cells. Variables area computed using
+#' the average of features (polygons or lines) that over each cell. It try to match each variable name
+#' (ignoring case) in the study area.
+#' @param centroid A boolean indicating if x_centroid and y_centroid variables must be computed and appended
+#' to variables./
 #'
-#' @return A SpatialPolygonsDataFrame with cells covering the study area. The dataframe contains the variables matched e computed acoording to each cell.
+#' @return A SpatialPolygonsDataFrame with cells covering the study area. The dataframe contains the variables
+#'  matched e computed acoording to each cell.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = FALSE)
-#' SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = FALSE)
+#' SPDF <- readOGR(
+#'    system.file("brasil_uf.gpkg", package="sdmTools"),
+#'    layer = "brasil_uf",
+#'    verbose = FALSE
+#'  )
+#' SLDF <- readOGR(
+#'    system.file("hydro_uper_prpy.gpkg", package="sdmTools"),
+#'    layer = "hydro_uper_prpy",
+#'    verbose = FALSE
+#'  )
 #'
-#' #gridded_area <- make_grid(SLDF, cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
+#' gridded_area <- SLDF %>%
+#'    make_grid(cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
 #'
-#' #gridded_area
+#' gridded_area %>% plot()
 #'
-#' #gridded_area <- make_grid(SPDF, cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
+#' gridded_area <- SPDF %>%
+#'    make_grid(cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
 #'
-#' #gridded_area
+#' gridded_area %>% plot()
 #'
 #' new_sdm_area <- sdm_area(SPDF)
 #'
-#' #gridded_area < make_grid(new_sdm_area, cell_width = 50000, cell_height = 50000, centroid=T)
+#' gridded_area < new_sdm_area %>%
+#'    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+#'
+#' gridded_area %>% plot()
 #' }
 make_grid <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   UseMethod("make_grid")
 }
 
+
+#' @export
 make_grid.default <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   warning("Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, SpatialLines, SpatialLinesDataFrame or SDM_area.")
   return(an_area)
 }
 
+
+#' @export
 make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   an_area <- an_area %>%
     #raster::buffer(
@@ -224,6 +248,7 @@ make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_
     return()
 }
 
+#' @export
 make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   an_area <- an_area %>%
     as("SpatialLinesDataFrame")
@@ -247,7 +272,7 @@ make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_nam
     return()
 }
 
-
+#' @export
 make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   an_area$study_area <- an_area$study_area %>%
     make_grid(cell_width, cell_height, var_names, centroid) %>%
@@ -282,7 +307,6 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
   }
   return(a_df)
 }
-
 
 .make_grid_sp <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   if (cell_width<=0 || cell_height<=0){
