@@ -19,4 +19,9 @@ Imports:
     dplyr,
     tibble,
     magrittr,
-    methods
+    methods,
+    gdalUtils,
+    purrr,
+    rgdal,
+    stringr,
+    tidyselect

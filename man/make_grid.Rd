@@ -47,7 +47,13 @@ SLDF <- readOGR(
  )
 
 gridded_area <- SLDF \%>\%
-   make_grid(cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
+   make_grid(
+      cell_width = 50000,
+      cell_height = 50000,
+      var_names =
+      c("Length", "xxx", "Main_ri"),
+      centroid=T
+   )
 
 gridded_area \%>\% plot()
 

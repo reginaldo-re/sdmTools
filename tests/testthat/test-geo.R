@@ -28,11 +28,6 @@ crs(SP) <- CRS("EPSG:6933")
 SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = F)
 SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
-
-test_that("Invalid parameters.", {
-  expect_error(areas_gt())
-})
-
 test_that("Lower bound less than or equal zero.", {
   expect_warning(areas_gt(NULL, 0), "Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
 })

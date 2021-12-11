@@ -1,4 +1,4 @@
-globalVariables(c("%>%", "is"))
+utils::globalVariables(c("where"))
 
 #' Creates a Study Area
 #'
@@ -201,7 +201,13 @@ areas_gt.SDM_area <- function(an_area, lower_bound = 0) {
 #'  )
 #'
 #' gridded_area <- SLDF %>%
-#'    make_grid(cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
+#'    make_grid(
+#'       cell_width = 50000,
+#'       cell_height = 50000,
+#'       var_names =
+#'       c("Length", "xxx", "Main_ri"),
+#'       centroid=T
+#'    )
 #'
 #' gridded_area %>% plot()
 #'
@@ -240,8 +246,8 @@ make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_
     as("SpatialPolygonsDataFrame")
 
   an_area@data <- an_area@data %>%
-    select(-(c("dummy", "cell_id") %>% any_of())) %>%
-    rowid_to_column("cell_id")
+    dplyr::select(-(c("dummy", "cell_id") %>% tidyselect::any_of())) %>%
+    tibble::rowid_to_column("cell_id")
 
   an_area %>%
     .make_grid_sp(cell_width, cell_height, var_names, centroid) %>%
@@ -281,7 +287,9 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
 
 .select_vars <- function(a_df, var_names=NULL){
   a_df <- a_df %>%
-    mutate(across(where(is.factor), as.numeric))
+    dplyr::mutate(
+        dplyr::across(where(is.factor), as.numeric)
+      )
 
   if (!is.null(var_names)){
     var_names <- c("cell_id") %>%
@@ -371,7 +379,7 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
     sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
   shp_grid@data <- grid_cells %>%
-    purrr::map_dfr(as_tibble, .id="grid_cell_id") %>%
+    purrr::map_dfr(dplyr::as_tibble, .id="grid_cell_id") %>%
     dplyr::rename(cell_id=value) %>%
     dplyr::left_join(shp_area_bkp@data, by = "cell_id") %>%
     dplyr::select(-cell_id) %>%
@@ -394,5 +402,16 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
   return(an_area)
 }
 
+
+#' Plot a SDM_area
+#'
+#' @param x SDM_area object
+#' @param ... Additional parameters
+#'
+#' @export
+#' @method plot SDM_area
+plot.SDM_area <- function(x, ...){
+  x$study_area %>% plot(...)
+}
 
 
