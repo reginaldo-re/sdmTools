@@ -270,7 +270,7 @@ make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_nam
     )
   } else{
     an_area@data <- an_area@data %>%
-      rowid_to_column("cell_id")
+      tibble::rowid_to_column("cell_id")
   }
 
   an_area %>%
@@ -317,6 +317,8 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
 }
 
 .make_grid_sp <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
+  cell_id <- grid_cell_id <- value <- x <- y <- NULL
+
   if (cell_width<=0 || cell_height<=0){
     stop("Invalid cell_width or cell_height.")
   }
@@ -326,12 +328,12 @@ make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=N
 
   shp_area_bkp <- an_area
 
-  shp_tmp_file <- tempfile() %>% paste0(".shp")
+  shp_tmp_file <- tempfile() %>% paste0(".gpkg")
   an_area %>%
     rgdal::writeOGR(
       dsn = shp_tmp_file,
-      layer=".",
-      driver="ESRI Shapefile",
+      layer= shp_tmp_file %>% fs::path_file() %>% fs::path_ext_remove(),
+      driver="GPKG",
       overwrite=T
     )
 
