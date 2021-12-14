@@ -645,6 +645,7 @@ area_map <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", 
   UseMethod("area_map", an_area)
 }
 
+#' @export
 area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
   an_area %>%
     broom::tidy() %>%
@@ -658,6 +659,7 @@ area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat
       fill)
 }
 
+#' @export
 area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
   an_area$study_area %>%
     broom::tidy() %>%

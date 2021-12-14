@@ -211,7 +211,7 @@ test_that("Merge raster over SDM_area with invalid area source.", {
   expect_warning(
     a_sdm_area_gridded_area %>%
       merge_area(system.file("rast", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list()),
-    "Nothing to do, It must be exists at least one variable to merge and one valid area source."
+    "Invalid area source."
   )
 })
 

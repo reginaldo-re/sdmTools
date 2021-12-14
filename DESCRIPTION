@@ -27,4 +27,5 @@ Imports:
     tidyselect,
     fs,
     ggplot2,
-    broom
+    broom,
+    terra
