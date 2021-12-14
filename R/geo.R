@@ -713,3 +713,20 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
   return(map_tmp)
 }
 
+
+#' @export
+repair_area <- function(an_area){
+  UseMethod("repair_area", an_area)
+}
+
+#' @export
+repair_area.SpatialPolygons <- function(an_area){
+  if (an_area %>% raster::crs() %>% is.na()){
+    raster::crs(an_area) <- sp::CRS("EPSG:4326")
+  }
+  an_area <- an_area %>%
+    rgeos::gBuffer(byid=TRUE, width=0)
+    return()
+}
+
+
