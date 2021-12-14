@@ -224,7 +224,7 @@ areas_gt.SDM_area <- function(an_area, lower_bound = 0) {
 #' gridded_area %>% plot()
 #' }
 make_grid <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
-  UseMethod("make_grid")
+  UseMethod("make_grid", an_area)
 }
 
 
@@ -235,8 +235,7 @@ make_grid.default <- function(an_area, cell_width=0, cell_height=0, var_names=NU
 }
 
 
-#' @export
-make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
+.make_grid_SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   an_area <- an_area %>%
     #raster::buffer(
     #  (c(cell_width, cell_height) %>% min()),
@@ -255,7 +254,12 @@ make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_
 }
 
 #' @export
-make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
+make_grid.SpatialPolygons <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
+  .make_grid_SpatialPolygons(an_area, cell_width, cell_height, var_names, centroid) %>%
+    return()
+}
+
+.make_grid_SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
   an_area <- an_area %>%
     as("SpatialLinesDataFrame")
 
@@ -278,10 +282,22 @@ make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_nam
     return()
 }
 
+
+#' @export
+make_grid.SpatialLines <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
+  .make_grid_SpatialLines(an_area, cell_width, cell_height, var_names, centroid) %>%
+    return()
+}
+
 #' @export
 make_grid.SDM_area <- function(an_area, cell_width=0, cell_height=0, var_names=NULL, centroid=T){
-  an_area$study_area <- an_area$study_area %>%
-    make_grid(cell_width, cell_height, var_names, centroid) %>%
+  if (an_area$study_area %>% is("SpatialPolygons")){
+    an_area$study_area <- an_area$study_area %>%
+      .make_grid_SpatialPolygons(cell_width, cell_height, var_names, centroid)
+  } else if (an_area$study_area %>% is("SpatialLines")){
+    an_area$study_area <- an_area$study_area %>%
+      .make_grid_SpatialLines(cell_width, cell_height, var_names, centroid)
+  }
   return(an_area)
 }
 
@@ -416,4 +432,208 @@ plot.SDM_area <- function(x, ...){
   x$study_area %>% plot(...)
 }
 
+#' Merge rasters over a study area.
+#' @param an_area A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.
+#' @param area_source A folder or a raster with variables to merge with.
+#' @param cell_width The width of cells.
+#' @param cell_height The height of cells.
+#' @param var_names A list (or vector) of variable names to keep on cells. Variables area computed using
+#' the average of raster points that over each cell. It try to match each variable name
+#' (ignoring case) in the study area.
+#'
+#' @return A SpatialPolygonsDataframe containing variables merged with.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' aaa
+#' }
+merge_area <- function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL){
+  UseMethod("merge_area", an_area)
+}
+
+#' @export
+merge_area.default <- function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL) {
+  warning("Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
+  return(an_area)
+}
+
+#' @export
+merge_area.SpatialPolygons <- function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL){
+  .merge_area_sp(an_area, area_source, cell_width, cell_height, var_names) %>%
+    return()
+}
+
+#' @export
+merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL){
+  an_area$study_area <- .merge_area_sp(an_area$study_area, area_source, cell_width, cell_height, var_names)
+
+  return(an_area)
+}
+
+.merge_area_sp <-function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL){
+  if (cell_width<=0 || cell_height<=0){
+    warning("Invalid cell width or cell heigth!")
+    return(an_area)
+  }
+  if (is.null(area_source)){
+    warning("Invalid area source.")
+    return(an_area)
+  }
+  if (!fs::is_dir(area_source) && !fs::is_file(area_source)){
+    warning("Invalid area source.")
+    return(an_area)
+  }
+  if (fs::is_file(area_source)){
+    var_names <- area_source %>%
+      fs::path_file() %>%
+      fs::path_ext_remove()
+
+    area_source <- area_source %>%
+      fs::path_dir()
+  }
+  if (((!is.null(var_names) && length(var_names)==0))){
+    warning("Nothing to do, It must be exists at least one variable to merge and one valid area source.")
+    return(an_area)
+  }
+  if (is.null(var_names)){
+    var_names <- area_source %>%
+      fs::dir_ls(type = "file") %>%
+      fs::path_file() %>%
+      fs::path_ext_remove()
+  }
+
+  raster_list <- area_source %>%
+    fs::dir_ls(type = "file") %>%
+    purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+
+  if (length(raster_list)!=length(var_names)){
+    stop("At least one variable name is ambiguous. Try to use more specific variable names.")
+  }
+
+  raster_stack <- raster_list %>%
+    raster::stack()
+
+  raster_tmp_file <- tempfile() %>%
+    paste0(".tif")
+  raster_stack %>%
+    raster::writeRaster(
+      raster_tmp_file,
+      format = "GTiff",
+      bylayer = F, #bylayer = T,
+      #suffix = lista_rasters_bio %>% names(),
+      options = c("dstnodata =-9999.0"),
+      overwrite=T,
+    )
+
+  shp_countour_file <- tempfile() %>%
+    paste0(".gpkg")
+  an_area %>%
+    raster::aggregate(dissolve=T) %>%
+    #rgeos::gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
+    #rgeos::gUnionCascaded() %>%
+    as("SpatialPolygonsDataFrame") %>%
+    rgdal::writeOGR(
+      dsn = shp_countour_file,
+      layer= shp_countour_file %>% fs::path_file() %>% fs::path_ext_remove(),
+      driver="GPKG",
+      overwrite=T
+    )
+
+  shp_area_file <- tempfile() %>%
+    paste0(".gpkg")
+  an_area %>%
+    rgdal::writeOGR(
+      dsn = shp_area_file,
+      layer= shp_area_file %>% fs::path_file() %>% fs::path_ext_remove(),
+      driver="GPKG",
+      overwrite=T
+    )
+
+  shp_grid_file <- tempfile() %>%
+    paste0(".gpkg")
+  an_area %>%
+    as("SpatialPolygonsDataFrame") %>%
+    rgdal::writeOGR(
+      dsn = shp_grid_file,
+      layer= shp_grid_file %>% fs::path_file() %>% fs::path_ext_remove(),
+      driver="GPKG",
+      overwrite=T
+    )
+
+  raster_file_reescaled_countour <- tempfile() %>%
+    paste0(".tif")
+  raster_reescaled_countour <- gdalUtils::gdalwarp(
+    raster_tmp_file,
+    raster_file_reescaled_countour,
+    s_srs = raster::crs(raster_stack),
+    t_srs = raster::crs(an_area),
+    cutline = shp_countour_file,
+    crop_to_cutline = T,
+    r = 'average',
+    tr = c(cell_width, cell_height),
+    tap = T,
+    te = an_area %>% raster::bbox() %>% as("vector"),
+    te_srs = raster::crs(an_area),
+    dstnodata = "-9999.0",
+    ot = 'Float32',
+    co = c("BIGTIFF=YES"), #"COMPRESS=DEFLATE", "PREDICTOR=2","ZLEVEL=9"),
+    #wo = c("CUTLINE_ALL_TOUCHED=TRUE"),
+    multi = T,
+    output_Raster = T,
+    overwrite = T,
+    verbose = T
+  ) %>%
+    raster::crop(an_area)
+
+  raster_reescaled_countour_masked <- raster_reescaled_countour %>%
+    terra::rast()
+
+  raster_reescaled_countour_masked <- raster_reescaled_countour_masked %>%
+    terra::mask(an_area %>% terra::vect(), touches=F) %>%
+    raster::stack()
+
+  raster_grid <- gdalUtils::gdal_rasterize(
+    shp_area_file,
+    tempfile() %>% paste0(".tif"),
+    #burn = 0,
+    a = "cell_id",
+    #at = T,
+    co = c("BIGTIFF=YES"),
+    a_nodata = "-9999.0",
+    tr = c(cell_width, cell_height),
+    #tap= T,
+    ot = 'Float32',
+    output_Raster = T,
+    te = an_area %>% raster::bbox() %>% as("vector"),
+    verbose = T
+  )
+
+  raster_grid <- raster_grid %>%
+    terra::rast() %>%
+    terra::mask((raster_reescaled_countour_masked %>% terra::rast())[[1]])
+
+
+  grid_cells <- raster_grid %>%
+    as.vector() %>%
+    purrr::discard(is.na)
+
+  an_area@data <- an_area@data %>%
+    as.data.frame()
+
+  shp_grid <- an_area[grid_cells %>% as.integer(),]
+
+  shp_grid@data$cell_id <- 1:length(grid_cells)
+  shp_grid %>%
+    sp::spChFIDs(as.character(1:length(grid_cells)))
+
+  shp_grid@data <- shp_grid@data %>% bind_cols(
+    raster_reescaled_countour_masked %>%
+      raster::as.list() %>%
+      purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
+      dplyr::rename_all(~ (var_names %>% unlist()))
+  )
+
+  return(shp_grid)
+}
 

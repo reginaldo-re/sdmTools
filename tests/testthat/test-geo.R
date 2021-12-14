@@ -158,5 +158,19 @@ test_that("Making a grid over SDM_area.", {
   gridded_area <- new_sdm_area %>%
     make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
 
-  expect_equal(gridded_area %>% nrow(), 3634)
+  expect_equal(gridded_area$study_area %>% nrow(), 3634)
+})
+
+
+test_that("Merge raster over SDM_area", {
+  new_sdm_area <- sdm_area(SPDF)
+
+  gridded_area <- new_sdm_area %>%
+    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+
+  gridded_area <- gridded_area %>%
+    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000)
+
+  expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
+  expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)
 })
