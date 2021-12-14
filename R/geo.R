@@ -654,7 +654,7 @@ area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat
   an_area %>%
     broom::tidy(region="cell_id") %>%
     mutate(cell_id = as.integer(id)) %>%
-    left_join(shp@data, by="cell_id")
+    left_join(an_area@data, by="cell_id")
     .area_map_sp(
       title,
       subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
@@ -674,7 +674,7 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
   an_area$study_area %>%
     broom::tidy(region="cell_id") %>%
     mutate(cell_id = as.integer(id)) %>%
-    left_join(shp@data, by="cell_id")
+    left_join(an_area@data, by="cell_id")
     .area_map_sp(
       title,
       subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
