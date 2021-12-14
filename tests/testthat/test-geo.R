@@ -49,12 +49,12 @@ test_that("Study area is not a vector polygon.", {
 
 test_that("Removing a single area from projected study area.", {
   new_area <- areas_gt(SP, 0.25)
-  expect_equal(new_area %>% gArea() %>% round(2), 0.980)
+  expect_equal(new_area %>% gArea() %>% round(2), 1.09)
 })
 
 test_that("Removing no areas from projected study area.", {
   new_area <- areas_gt(SP, 0.1)
-  expect_equal(new_area %>% gArea() %>% round(2), 1.23)
+  expect_equal(new_area %>% gArea() %>% round(2), 1.34)
 })
 
 test_that("Removing all areas from projected study area.", {
@@ -88,7 +88,7 @@ test_that("Trying to create an invalid SDM_area.", {
 
 test_that("Removing no areas from study area using SpatialPolygonsDataframe.", {
   new_area <- areas_gt(SP %>% as("SpatialPolygonsDataFrame"), 0.1)
-  expect_equal(new_area %>% gArea() %>% round(2), 1.23)
+  expect_equal(new_area %>% gArea() %>% round(2), 1.34)
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all variables.", {

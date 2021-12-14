@@ -75,29 +75,29 @@ sdm_area <- function(an_area=NULL){
   if (!(lower_bound %>% is.numeric()) || lower_bound <= 0) {
     stop("Invalid lower bound!")
   }
-  if (an_area %>% raster::crs() %>% is.na()){
-    raster::crs(an_area) <- sp::CRS("EPSG:4326")
-  }
-  suppressWarnings(
-    vect_tmp <- an_area %>%
-      rgeos::gBuffer(width = 0) %>%
-      sp::disaggregate()
-  )
 
-  if (is.na(raster::crs(vect_tmp))){
-    remain_areas <- vect_tmp[rgeos::gArea(vect_tmp, byid = T) > lower_bound, ]
+  an_area <- an_area %>%
+    repair_area()
+
+  an_area_agg <- an_area %>%
+    raster::aggregate() %>%
+    raster::disaggregate()
+
+  if (is.na(raster::crs(an_area_agg))){
+    remain_areas_agg <- an_area_agg[rgeos::gArea(an_area_agg, byid = T) > lower_bound, ]
   }
   else {
-    remain_areas <- vect_tmp[raster::area(vect_tmp) > lower_bound, ]
+    remain_areas_agg <- an_area_agg[raster::area(an_area_agg) > lower_bound, ]
   }
 
-  if (length(remain_areas@polygons)>0){
-    remain_areas <- an_area %>%
-      raster::disaggregate() %>%
-      rgeos::gIntersection(remain_areas, byid = T)
+  if ((remain_areas_agg@polygons %>% length())>0){
+    an_area %>%
+      raster::intersect(remain_areas_agg) %>%
+      return()
+  } else {
+    remain_areas_agg %>%
+      return()
   }
-
-  return(remain_areas)
 }
 
 #' Drop noncontiguous polygons with an area smaller or equal lower_bound.
@@ -724,9 +724,11 @@ repair_area.SpatialPolygons <- function(an_area){
   if (an_area %>% raster::crs() %>% is.na()){
     raster::crs(an_area) <- sp::CRS("EPSG:4326")
   }
-  an_area %>%
-    rgeos::gBuffer(byid=TRUE, width=0) %>%
-    return()
+  suppressWarnings(
+    an_area %>%
+      rgeos::gBuffer(byid=TRUE, width=0) %>%
+      return()
+  )
 }
 
 
