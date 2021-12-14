@@ -647,14 +647,7 @@ area_map <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", 
 
 #' @export
 area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
-  if (!("cell_id" %in% (an_area %>% names()))){
-    warning("an_area must contain a cell_id column.")
-    return(NULL)
-  }
   an_area %>%
-    broom::tidy(region="cell_id") %>%
-    mutate(cell_id = as.integer(id)) %>%
-    left_join(an_area@data, by="cell_id")
     .area_map_sp(
       title,
       subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
@@ -667,14 +660,7 @@ area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat
 
 #' @export
 area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
-  if (!("cell_id" %in% (an_area %>% names()))){
-    warning("an_area must contain a cell_id column.")
-    return(NULL)
-  }
   an_area$study_area %>%
-    broom::tidy(region="cell_id") %>%
-    mutate(cell_id = as.integer(id)) %>%
-    left_join(an_area@data, by="cell_id")
     .area_map_sp(
       title,
       subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
@@ -687,8 +673,19 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
 }
 
 
-.area_map_sp <- function(map_data, title="", subtitle="", lat="lat", long="long", group="group", colour="black", fill=NA) {
+.area_map_sp <- function(an_area, title="", subtitle="", lat="lat", long="long", group="group", colour="black", fill=NA) {
   number_format <- function(x) format(x, big.mark = ".", decimal.mark = ",", scientific = FALSE)
+
+  if (("cell_id" %in% (an_area %>% names()))){
+    map_data <- an_area %>%
+      broom::tidy(region="cell_id") %>%
+      mutate(cell_id = as.integer(id)) %>%
+      left_join(an_area@data, by="cell_id")
+  }
+  else {
+    map_data <- an_area %>%
+      broom::tidy()
+  }
 
   suppressMessages(
     map_tmp <- ggplot2::ggplot(
