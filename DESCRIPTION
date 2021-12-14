@@ -25,4 +25,6 @@ Imports:
     rgdal,
     stringr,
     tidyselect,
-    fs
+    fs,
+    ggplot2,
+    broom

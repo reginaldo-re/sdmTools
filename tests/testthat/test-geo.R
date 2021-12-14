@@ -28,6 +28,12 @@ crs(SP) <- CRS("EPSG:6933")
 SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = F)
 SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
+a_sdm_area <- sdm_area(SPDF)
+
+a_sdm_area_gridded_area <- a_sdm_area %>%
+  make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+
+
 test_that("Lower bound less than or equal zero.", {
   expect_warning(areas_gt(NULL, 0), "Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
 })
@@ -162,15 +168,66 @@ test_that("Making a grid over SDM_area.", {
 })
 
 
-test_that("Merge raster over SDM_area", {
-  new_sdm_area <- sdm_area(SPDF)
-
-  gridded_area <- new_sdm_area %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
-
-  gridded_area <- gridded_area %>%
+test_that("Merge raster over SDM_area with all unnamed raster variables.", {
+  gridded_area <- a_sdm_area_gridded_area %>%
     merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000)
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)
+})
+
+test_that("Merge raster over SDM_area with one named raster variables.", {
+  gridded_area <- a_sdm_area_gridded_area %>%
+    merge_area(system.file("rasters/wc2.0_bio_5m_01.tif", package="sdmTools"), cell_width = 50000, cell_height = 50000)
+
+  expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
+})
+
+
+test_that("Merge raster over SDM_area with all named raster variables.", {
+  gridded_area <- a_sdm_area_gridded_area %>%
+    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("bio_5m_01", "bio_5m_02"))
+
+  expect_equal(gridded_area$study_area$bio_5m_01 %>% mean() %>% round(2), 24.37)
+  expect_equal(gridded_area$study_area$bio_5m_02 %>% mean() %>% round(2), 11.08)
+})
+
+test_that("Merge raster over SDM_area with only one named raster variables.", {
+  gridded_area <- a_sdm_area_gridded_area %>%
+    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("bio_5m_01"))
+
+  expect_equal(gridded_area$study_area$bio_5m_01 %>% mean() %>% round(2), 24.37)
+})
+
+test_that("Merge raster over SDM_area with none raster variables.", {
+  expect_warning(
+    a_sdm_area_gridded_area %>%
+      merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list()),
+      "Nothing to do, It must be exists at least one variable to merge and one valid area source."
+  )
+})
+
+test_that("Merge raster over SDM_area with invalid area source.", {
+  expect_warning(
+    a_sdm_area_gridded_area %>%
+      merge_area(system.file("rast", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list()),
+    "Nothing to do, It must be exists at least one variable to merge and one valid area source."
+  )
+})
+
+test_that("Merge raster over SDM_area with wrong raster variables names.", {
+  expect_warning(
+    a_sdm_area_gridded_area %>%
+      merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("wrong_name")),
+    "At least one variable name is ambiguous. Try to use more specific variable names."
+  )
+})
+
+
+test_that("Merge raster over SDM_area with invalid cell width.", {
+  expect_warning(
+    a_sdm_area_gridded_area %>%
+      merge_area(system.file("rasters", package="sdmTools"), cell_width = 0, cell_height = 50000),
+      "Invalid cell width or cell heigth."
+  )
 })

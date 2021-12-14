@@ -473,14 +473,10 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
 
 .merge_area_sp <-function(an_area, area_source=NULL, cell_width=0, cell_height=0, var_names=NULL){
   if (cell_width<=0 || cell_height<=0){
-    warning("Invalid cell width or cell heigth!")
+    warning("Invalid cell width or cell heigth.")
     return(an_area)
   }
-  if (is.null(area_source)){
-    warning("Invalid area source.")
-    return(an_area)
-  }
-  if (!fs::is_dir(area_source) && !fs::is_file(area_source)){
+  if (is.null(area_source) || (!fs::is_dir(area_source) && !fs::is_file(area_source))){
     warning("Invalid area source.")
     return(an_area)
   }
@@ -502,13 +498,17 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
       fs::path_file() %>%
       fs::path_ext_remove()
   }
+  if (var_names %>% is.list()){
+    var_names <- var_names %>% unlist()
+  }
 
   raster_list <- area_source %>%
     fs::dir_ls(type = "file") %>%
     purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
 
   if (length(raster_list)!=length(var_names)){
-    stop("At least one variable name is ambiguous. Try to use more specific variable names.")
+    warning("At least one variable name is ambiguous. Try to use more specific variable names.")
+    return(an_area)
   }
 
   raster_stack <- raster_list %>%
@@ -582,7 +582,7 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
     multi = T,
     output_Raster = T,
     overwrite = T,
-    verbose = T
+    verbose = F
   ) %>%
     raster::crop(an_area)
 
@@ -606,7 +606,7 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
     ot = 'Float32',
     output_Raster = T,
     te = an_area %>% raster::bbox() %>% as("vector"),
-    verbose = T
+    verbose = F
   )
 
   raster_grid <- raster_grid %>%
@@ -627,13 +627,87 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
   shp_grid %>%
     sp::spChFIDs(as.character(1:length(grid_cells)))
 
-  shp_grid@data <- shp_grid@data %>% bind_cols(
-    raster_reescaled_countour_masked %>%
-      raster::as.list() %>%
-      purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
-      dplyr::rename_all(~ (var_names %>% unlist()))
+  suppressMessages(
+    shp_grid@data <- shp_grid@data %>% bind_cols(
+      raster_reescaled_countour_masked %>%
+        raster::as.list() %>%
+        purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
+        dplyr::rename_all(~ (var_names %>% unlist()))
+    )
   )
 
   return(shp_grid)
+}
+
+
+#' @export
+area_map <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
+  UseMethod("area_map", an_area)
+}
+
+area_map.SpatialPolygons <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
+  an_area %>%
+    broom::tidy() %>%
+    .area_map_sp(
+      title,
+      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
+      lat,
+      long,
+      group,
+      colour,
+      fill)
+}
+
+area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long="long", group="group", colour="black", fill=NA){
+  an_area$study_area %>%
+    broom::tidy() %>%
+    .area_map_sp(
+      title,
+      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
+      lat,
+      long,
+      group,
+      colour,
+      fill
+    )
+}
+
+
+.area_map_sp <- function(map_data, title="", subtitle="", lat="lat", long="long", group="group", colour="black", fill=NA) {
+  number_format <- function(x) format(x, big.mark = ".", decimal.mark = ",", scientific = FALSE)
+
+  suppressMessages(
+    map_tmp <- ggplot2::ggplot(
+      data =  map_data,
+      ggplot2::aes_string(
+        x = long,
+        y = lat,
+        group = group
+      )
+    ) +
+      ggplot2::scale_x_continuous(labels = number_format) +
+      ggplot2::scale_y_continuous(labels = number_format) +
+      ggplot2::coord_equal()
+  )
+
+  if (title != ""){
+    map_tmp <- map_tmp +
+      ggplot2::labs(title=title)
+  }
+
+  if (subtitle != ""){
+    map_tmp <- map_tmp +
+      ggplot2::labs(subtitle = subtitle)
+  }
+
+  if (is.na(fill)){
+    map_tmp <- map_tmp +
+      ggplot2::geom_polygon(colour = colour, fill = NA)
+  } else {
+    map_tmp <- map_tmp +
+      ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
+  }
+
+  return(map_tmp)
 }
 
