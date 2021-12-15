@@ -58,6 +58,9 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
   if (file_path %>% is.null()){
     stop("Invalid file path.")
   }
+  if (file_path %>% fs::path_ext() == ""){
+    file_path <- paste0(file_path, ".gpkg")
+  }
   result = tryCatch({
     clear_dir <- !(file_path %>%
       fs::path_dir() %>%
