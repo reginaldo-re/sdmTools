@@ -689,19 +689,18 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
       sp_tidy()
   }
 
-  suppressMessages(
-    map_tmp <- ggplot2::ggplot(
-      data =  map_data,
-      ggplot2::aes_string(
-        x = long,
-        y = lat,
-        group = group
-      )
-    ) +
-      ggplot2::scale_x_continuous(labels = number_format) +
-      ggplot2::scale_y_continuous(labels = number_format) +
-      ggplot2::coord_equal()
-  )
+  map_tmp <- ggplot2::ggplot(
+    data =  map_data,
+    ggplot2::aes_string(
+      x = long,
+      y = lat,
+      group = group
+    )
+  ) +
+    ggplot2::scale_x_continuous(labels = number_format) +
+    ggplot2::scale_y_continuous(labels = number_format) +
+    ggplot2::coord_equal()
+
 
   if (title != ""){
     map_tmp <- map_tmp +
@@ -720,6 +719,7 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
     map_tmp <- map_tmp +
       ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
   }
+
 
   return(map_tmp)
 }
@@ -744,8 +744,8 @@ repair_area.SpatialPolygons <- function(an_area){
 
 
 #' @export
-tidy_sp <- function(an_area){
-  UseMethod("tidy_sp", an_area)
+sp_tidy <- function(an_area){
+  UseMethod("sp_tidy", an_area)
 }
 
 #' @export
@@ -765,15 +765,19 @@ sp_tidy.SDM_area <- function(an_area, region = NULL){
 .tidy_sp <- function(an_area, region = NULL) {
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
-      an_area %>%
-        broom::tidy(region=region) %>%
-        mutate(id = as.integer(id)) %>%
-        left_join(an_area@data, by=c("id", region)) %>%
-        return()
+      suppressMessages(
+        df_tmp <- an_area %>%
+          broom::tidy(region=region) %>%
+          mutate(id = as.integer(id)) %>%
+          left_join(an_area@data, by=c("id", region))
+      )
+      return(df_tmp)
     }
   }
-  an_area %>%
-    broom::tidy() %>%
-    return()
+  suppressMessages(
+    df_tmp <- an_area %>%
+      broom::tidy()
+  )
+  return(df_tmp)
 }
 
