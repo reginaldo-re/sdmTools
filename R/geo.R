@@ -743,6 +743,25 @@ repair_area.SpatialPolygons <- function(an_area){
 }
 
 
+#' @export
+tidy_sp <- function(an_area){
+  UseMethod("tidy_sp", an_area)
+}
+
+#' @export
+sp_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
+  an_area %>%
+    .tidy_sp(region) %>%
+    return()
+}
+
+#' @export
+sp_tidy.SDM_area <- function(an_area, region = NULL){
+  an_area %>%
+    .tidy_sp(region) %>%
+    return()
+}
+
 .tidy_sp <- function(an_area, region = NULL) {
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
@@ -758,17 +777,3 @@ repair_area.SpatialPolygons <- function(an_area){
     return()
 }
 
-
-#' @export
-sp_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
-  an_area %>%
-    .tidy_sp(region) %>%
-    return()
-}
-
-#' @export
-sp_tidy.SDM_area <- function(an_area, region = NULL){
-  an_area %>%
-    .tidy_sp(region) %>%
-    return()
-}
