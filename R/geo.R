@@ -682,13 +682,11 @@ area_map.SDM_area <- function(an_area, title="", crs_subtitle=T, lat="lat", long
 
   if (("cell_id" %in% (an_area %>% names()))){
     map_data <- an_area %>%
-      broom::tidy(region="cell_id") %>%
-      mutate(cell_id = as.integer(id)) %>%
-      left_join(an_area@data, by="cell_id")
+      sp_tidy("cell_id")
   }
   else {
     map_data <- an_area %>%
-      broom::tidy()
+      sp_tidy()
   }
 
   suppressMessages(
@@ -742,4 +740,35 @@ repair_area.SpatialPolygons <- function(an_area){
       rgeos::gBuffer(byid=TRUE, width=0) %>%
       return()
   )
+}
+
+
+.tidy_sp <- function(an_area, region = NULL) {
+  if (!(region %>% is.null())){
+    if ((region %in% (an_area %>% names()))){
+      an_area %>%
+        broom::tidy(region=region) %>%
+        mutate(id = as.integer(id)) %>%
+        left_join(an_area@data, by=c("id", region)) %>%
+        return()
+    }
+  }
+  an_area %>%
+    broom::tidy() %>%
+    return()
+}
+
+
+#' @export
+sp_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
+  an_area %>%
+    .tidy_sp(region) %>%
+    return()
+}
+
+#' @export
+sp_tidy.SDM_area <- function(an_area, region = NULL){
+  an_area %>%
+    .tidy_sp(region) %>%
+    return()
 }
