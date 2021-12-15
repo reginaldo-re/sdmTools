@@ -514,6 +514,10 @@ merge_area.SDM_area <- function(an_area, area_source=NULL, cell_width=0, cell_he
   raster_stack <- raster_list %>%
     raster::stack()
 
+  if (raster_stack %>% raster::crs() %>% is.na()){
+    raster::crs(raster_stack) <- raster::crs("EPSG:4326")
+  }
+
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
   raster_stack %>%
