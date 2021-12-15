@@ -1,30 +1,30 @@
 #' @export
-sp_tidy <- function(an_area){
+sp_tidy <- function(an_area, region = NULL){
   UseMethod("sp_tidy", an_area)
 }
 
 #' @export
 sp_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
   an_area %>%
-    .tidy_sp(region) %>%
+    .sp_tidy(region) %>%
     return()
 }
 
 #' @export
 sp_tidy.SDM_area <- function(an_area, region = NULL){
   an_area %>%
-    .tidy_sp(region) %>%
+    .sp_tidy(region) %>%
     return()
 }
 
-.tidy_sp <- function(an_area, region = NULL) {
+.sp_tidy <- function(an_area, region = NULL) {
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
       suppressMessages(
         df_tmp <- an_area %>%
           broom::tidy(region=region) %>%
-          mutate(id = as.integer(id)) %>%
-          left_join(an_area@data, by=c("id", region))
+          mutate({{region}} := as.integer(id)) %>%
+          left_join(an_area@data, by=region)
       )
       return(df_tmp)
     }
