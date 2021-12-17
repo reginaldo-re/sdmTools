@@ -1,13 +1,22 @@
 #' @export
-occurrences_to_shapefile <- function(o_file, sp_names, shp, proj){
-  sp_names <- sp_names %>%
-    unlist() %>%
-    to_snake_case()
+occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL, a_crs = "EPSG:4326"){
+  sp_names <- unlist(sp_names)
+
+  if (o_file %>% is_null() || shp %>% is_null()){
+    if (sp_occurrences %>% names() %>% length() != 3){
+      stop("Both o_file and sp_names must have diffent values then NULL.")
+    }
+  }
 
   sp_occurrences <- o_file %>%
-    vroom(show_col_types = F) %>%
-    clean_names() %>%
-    remove_empty(c("rows", "cols"))
+    vroom::vroom(show_col_types = F) %>%
+    janitor::clean_names() %>%
+    janitor::remove_empty(c("rows", "cols")) %>%
+    dplyr::mutate(across(is.character, stringr::str_squish))
+
+  if (sp_occurrences %>% names() %>% length() != 3){
+    stop("Occurrences file must be three columns named: species, long, lat.")
+  }
 
   sp_column_name <- sp_occurrences %>%
     select_if(is.character) %>%
@@ -15,34 +24,26 @@ occurrences_to_shapefile <- function(o_file, sp_names, shp, proj){
     pluck(1)
 
   sp_occurrences <- sp_occurrences %>%
-    rename(species = all_of(sp_column_name)) %>%
-    mutate(species = species %>% to_snake_case())
+    rename(species = all_of(sp_column_name))
 
-  if (!is.na(sp_names) && !is.null(sp_names) && length(sp_names)>0)
+  if (!is.null(sp_names)){
+    sp_names <- sp_names %>%
+      stringr::str_squish()
     sp_occurrences <-  sp_occurrences %>%
-    filter(species  %in% sp_names)
+      filter(species %>% magrittr::is_in(sp_names))
+  }
+  sp_occurrences %>%
+    mutate(across(!species, ~ .x %>%  as.character() %>% as.numeric()))
 
-  if (is.character(shp))
-    shp <- shp %>%
-    readOGR(verbose = F)
-
-  sp_occurrences$longitude <- sp_occurrences$longitude %>%
-    as.character() %>%
-    as.numeric()
-
-  sp_occurrences$latitude <- sp_occurrences$latitude %>%
-    as.character() %>%
-    as.numeric()
-
-  coordinates(sp_occurrences) <- ~longitude+latitude
-  if (is.character(proj)){
-    crs(sp_occurrences) <- CRS(proj)
+  sp::coordinates(sp_occurrences) <- ~long+lat
+  if (is.character(a_crs)){
+    raster::crs(sp_occurrences) <- raster::crs(a_crs)
   } else {
-    crs(sp_occurrences) <- proj
+    raster::crs(sp_occurrences) <- a_crs
   }
 
   sp_occurrences %>%
-    spTransform(crs(shp)) %>%
+    sp::spTransform(raster::crs(shp)) %>%
     return()
 }
 
@@ -50,7 +51,7 @@ occurrences_to_shapefile <- function(o_file, sp_names, shp, proj){
 occurrences_to_pa_shapefile <- function(shp_occ, shp_area, sp_names){
   sp_names <- sp_names %>%
     unlist() %>%
-    to_snake_case()
+    stringr::str_squish()
 
   pa_matrix <- shp_area@data[, F]
 
@@ -58,7 +59,7 @@ occurrences_to_pa_shapefile <- function(shp_occ, shp_area, sp_names){
     pa_matrix <- pa_matrix %>%
       bind_cols(
         shp_area %>%
-          over(shp_occ[shp_occ@data$species==spp, ])
+          over(shp_occ[shp_occ@data$species == spp, ])
       )
   }
   names(pa_matrix) <- sp_names
