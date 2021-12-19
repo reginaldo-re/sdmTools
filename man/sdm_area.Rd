@@ -4,49 +4,35 @@
 \alias{sdm_area}
 \title{Creates a Study Area}
 \usage{
-sdm_area(an_area = NULL)
+sdm_area(an_area = NULL, a_crs = NULL, a_res = NULL)
 }
 \arguments{
-\item{an_area}{A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.}
+\item{an_area}{A sp object or a path to a file, commonly a shapefile or geopackage, representing the area of study.}
+
+\item{a_crs}{A valid CRS code, for example EPSG:4326.}
+
+\item{a_res}{A vector containing the resolution of the study area. The format is two numeric values
+(width and height) according to CRS used. So, the numeric values can be express different types of units of
+measurement, for example deegres or meters.}
 }
 \value{
-An object representing a study area containing a sp object. If polygons are invalid because topological
-erros they are corrected. Furthermore, if no coordinate reference system are used it will be set to EPSG:4326.
+An object representing a study area containing a sp object. Occasional topological errors on polygons of the
+object are corrected. If the CRS of the study area is different from the CRS passed to the function, the study
+area is reproject.
 }
 \description{
 Creates a Study Area
 }
 \examples{
 \dontrun{
-main <-  cbind(
-c(0, 0, 1, 1),
-c(0, 1, 1, 0)
+SPDF <- readOGR(
+   system.file("brasil_uf.gpkg", package="sdmTools"),
+   layer = "brasil_uf",
+   verbose = FALSE
 )
-secondary <- cbind(
-  c(1, 1.3, 1.3, 1),
-  c(1, 1.0, 0.7, 0.7)
-)
-hole <- main/3 + 1/3
-island = cbind(
-  c(1.05, 1.05, 1.55, 1.55),
-  c(0, .5, .5, 0)
-)
-
-P <- Polygons(
-  ID = 1,
-  list(
-    Polygon(main),
-    Polygon(hole, hole = TRUE),
-    Polygon(island),
-    Polygon(secondary)
-  )
-)
-
-SP = SpatialPolygons(list(P))
-crs(SP) <- CRS("EPSG:6933")
-
-new_sdm_area <- sdm_area(SP)
+new_sdm_area <- sdm_area(SPDF, "EPSG:6933", c(50000, 50000)))
 
 class(new_sdm_area)
 }
+
 }

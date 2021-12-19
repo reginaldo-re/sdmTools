@@ -4,22 +4,12 @@
 \alias{make_grid}
 \title{Make a grid over study area.}
 \usage{
-make_grid(
-  an_area,
-  cell_width = 0,
-  cell_height = 0,
-  var_names = NULL,
-  centroid = T
-)
+make_grid(an_area = NULL, var_names = NULL, has_centroid = T)
 }
 \arguments{
-\item{an_area}{A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.}
+\item{an_area}{A SDM_area object representing the area of study.}
 
-\item{cell_width}{The width of cells.}
-
-\item{cell_height}{The height of cells.}
-
-\item{var_names}{A list (or vector) of variable names to keep on cells. Variables area computed using
+\item{var_names}{A list of variable names to keep on cells. Variables area computed using
 the average of features (polygons or lines) that over each cell. It try to match each variable name
 (ignoring case) in the study area.}
 
@@ -27,8 +17,8 @@ the average of features (polygons or lines) that over each cell. It try to match
 to variables./}
 }
 \value{
-A SpatialPolygonsDataFrame with cells covering the study area. The dataframe contains the variables
-matched e computed acoording to each cell.
+A SDM_area  object with cells covering the study area. The dataframe contains the variables
+matched and computed acoording to each cell.
 }
 \description{
 Make a grid over study area.
@@ -45,28 +35,20 @@ SLDF <- readOGR(
    layer = "hydro_uper_prpy",
    verbose = FALSE
  )
-
-gridded_area <- SLDF \%>\%
-   make_grid(
-      cell_width = 50000,
-      cell_height = 50000,
-      var_names =
-      c("Length", "xxx", "Main_ri"),
-      centroid=T
-   )
-
+new_sdm_area <- sdm_area(SPDF, "EPSG:6933", c(50000, 50000)))
+gridded_area <- make_grid(
+      new_sdm_area,
+      var_names = c("Length", "xxx", "Main_ri"),
+      centroid = T
+ )
 gridded_area \%>\% plot()
 
-gridded_area <- SPDF \%>\%
-   make_grid(cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
-
-gridded_area \%>\% plot()
-
-new_sdm_area <- sdm_area(SPDF)
-
-gridded_area < new_sdm_area \%>\%
-   make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
-
+new_sdm_area <- sdm_area(SLDF, "EPSG:6933", c(50000, 50000)))
+gridded_area <- make_grid(
+      new_sdm_area,
+      var_names = c("Length", "xxx", "Main_ri"),
+      centroid = T
+ )
 gridded_area \%>\% plot()
 }
 }

@@ -70,7 +70,7 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
       fs::path_dir() %>%
       fs::dir_create(recurse = T)
 
-    an_area %>% writeOGR(
+    an_area %>% rgdal::writeOGR(
       dsn = file_path,
       layer = file_path %>% fs::path_file() %>% fs::path_ext_remove(),
       driver="GPKG",

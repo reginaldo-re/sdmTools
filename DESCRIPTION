@@ -28,4 +28,5 @@ Imports:
     fs,
     ggplot2,
     broom,
-    terra
+    terra,
+    checkmate

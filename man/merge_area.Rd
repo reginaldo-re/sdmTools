@@ -2,34 +2,26 @@
 % Please edit documentation in R/geo.R
 \name{merge_area}
 \alias{merge_area}
-\title{Merge rasters over a study area.}
+\title{Merge rasters over a gridded study area.}
 \usage{
-merge_area(
-  an_area,
-  area_source = NULL,
-  cell_width = 0,
-  cell_height = 0,
-  var_names = NULL
-)
+merge_area(an_area = NULL, to_merge_area = NULL, var_names = NULL)
 }
 \arguments{
-\item{an_area}{A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.}
+\item{an_area}{A SDM_area object with cells covering the study area.}
 
-\item{area_source}{A folder or a raster with variables to merge with.}
-
-\item{cell_width}{The width of cells.}
-
-\item{cell_height}{The height of cells.}
-
-\item{var_names}{A list (or vector) of variable names to keep on cells. Variables area computed using
+\item{var_names}{A list of variable names to keep on cells. Variables area computed using
 the average of raster points that over each cell. It try to match each variable name
 (ignoring case) in the study area.}
+
+\item{area_source}{A path to a folder or a Raster* object with variables to merge with.}
 }
 \value{
-A SpatialPolygonsDataframe containing variables merged with.
+A SDM_area_gridded object containing variables merged with. If the CRS of the Raster* is
+different from the CRS of the SDM_area object, it is reproject. The merging process
+produces cells intersecting SDM_area object and Raster*.
 }
 \description{
-Merge rasters over a study area.
+Merge rasters over a gridded study area.
 }
 \examples{
 \dontrun{

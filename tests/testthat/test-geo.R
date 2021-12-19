@@ -28,141 +28,163 @@ crs(SP) <- CRS("EPSG:6933")
 SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = F)
 SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
-a_sdm_area <- sdm_area(SPDF)
+a_sdm_area <- SPDF %>%
+  sdm_area("EPSG:6933", c(50000, 50000))
 
 a_sdm_area_gridded_area <- a_sdm_area %>%
-  make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+  make_grid()
 
-
-test_that("Lower bound less than or equal zero.", {
-  expect_warning(areas_gt(NULL, 0), "Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
-})
-
-test_that("Only null parameters.", {
-  expect_warning(areas_gt(NULL, NULL), "Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
-})
 
 test_that("Study area is not a vector polygon.", {
   sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
-  expect_warning(areas_gt(sl1, 10000), "Nothing to do, the type of an_area must be: SpatialPolygons, SpatialPolygonsDataFrame, or SDM_area.")
+  crs(sl1) <- CRS("EPSG:6933")
+  new_area <- sl1 %>%
+    sdm_area("EPSG:6933", c(50000, 50000))
+
+  expect_error(new_area %>% areas_gt(10000))
 })
 
 test_that("Removing a single area from projected study area.", {
-  new_area <- areas_gt(SP, 0.25)
-  expect_equal(new_area %>% gArea() %>% round(2), 1.09)
+  new_area <- SP %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    areas_gt(0.25)
+  expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.09)
 })
 
 test_that("Removing no areas from projected study area.", {
-  new_area <- areas_gt(SP, 0.1)
-  expect_equal(new_area %>% gArea() %>% round(2), 1.34)
+  new_area <- SP %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    areas_gt(0.1)
+
+  expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
 })
 
 test_that("Removing all areas from projected study area.", {
-  new_area <- areas_gt(SP, 20)
-  expect_error(gArea(new_area))
+  new_area <- SP %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    areas_gt(20)
+
+  expect_error(gArea(new_area$study_area))
 })
 
 
 test_that("Removing a single area from sdm_area.", {
-  new_sdm_area <- sdm_area(SP)
+  new_sdm_area <- SP %>% sdm_area("EPSG:6933", c(50000, 50000))
   new_sdm_area <- areas_gt(new_sdm_area, 0.25)
 
   expect_s3_class(new_sdm_area, "SDM_area")
   expect_equal(new_sdm_area$study_area %>% gArea() %>% round(2), 1.09)
 })
 
-test_that("Lower bound less than or equal zero on SDM_area.", {
-  new_sdm_area <- sdm_area(SP)
-  expect_error(areas_gt(new_sdm_area, 0))
-})
-
 test_that("Creating a valid SDM_area.", {
-new_sdm_area <- sdm_area(SP)
+new_sdm_area <- SP %>% sdm_area("EPSG:6933", c(50000, 50000))
   expect_s3_class(new_sdm_area, "SDM_area")
 })
 
+test_that("Creating a valid SDM_area from file.", {
+  expect_s3_class(sdm_area(system.file("brasil_uf.gpkg", package="sdmTools"), "EPSG:6933", c(50000, 50000)), "SDM_area")
+})
+
+
 test_that("Trying to create an invalid SDM_area.", {
-  expect_error(sdm_area(NULL), "Study area must be in a vectorized format!")
+  expect_error(NULL %>% sdm_area("EPSG:6933", c(1,1)))
+  expect_error(SP %>% sdm_area())
+  expect_error(SP %>% sdm_area(a_crs = "EPSG:XXXX"))
+  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933"))
+  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933", c(1)))
+  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933", c(0,2)))
 })
 
 
 test_that("Removing no areas from study area using SpatialPolygonsDataframe.", {
-  new_area <- areas_gt(SP %>% as("SpatialPolygonsDataFrame"), 0.1)
-  expect_equal(new_area %>% gArea() %>% round(2), 1.34)
+  new_area <- SP %>%
+    as("SpatialPolygonsDataFrame") %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    areas_gt(0.1)
+
+  expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all variables.", {
   gridded_area <- SPDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, var_names = list(), centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid(var_names = list())
 
-  expect_equal(gridded_area %>% nrow(), 3634)
-  expect_true(((gridded_area@data %>% names()) == c("cell_id", "x_centroid", "y_centroid")) %>% all())
+  expect_equal(gridded_area$study_area %>% nrow(), 3634)
+  expect_true(((gridded_area$study_area@data %>% names()) == c("cell_id", "x_centroid", "y_centroid")) %>% all())
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with all variables.", {
   gridded_area <- SPDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
 
-  expect_equal(gridded_area %>% nrow(), 3634)
-  expect_equal(gridded_area@data$geocodigo %>% mean() %>% round(2), 12.10)
+  expect_equal(gridded_area$study_area %>% nrow(), 3634)
+  expect_equal(gridded_area$study_area@data$geocodigo %>% mean() %>% round(2), 12.10)
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with one variable.", {
   gridded_area <- SPDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, var_names = c("geocodigo"), centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid(var_names = list("geocodigo"))
 
-  expect_equal(gridded_area %>% nrow(), 3634)
-  expect_equal(gridded_area@data$geocodigo %>% mean() %>% round(2), 12.10)
+  expect_equal(gridded_area$study_area %>% nrow(), 3634)
+  expect_equal(gridded_area$study_area@data$geocodigo %>% mean() %>% round(2), 12.10)
 })
 
 
 test_that("Making a grid over study area (SpatialPolygons).", {
   gridded_area <- SPDF %>%
     as("SpatialPolygons") %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
 
-  expect_equal(gridded_area %>% nrow(), 3634)
+  expect_equal(gridded_area$study_area %>% nrow(), 3634)
 })
 
 test_that("Making a grid over study area (SpatialLinesDataframe) removing all variables.", {
   gridded_area <- SLDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, var_names = list(), centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid(var_names = list())
 
-  expect_equal(gridded_area %>% nrow(), 351)
-  expect_true(((gridded_area@data %>% names()) == c("cell_id", "x_centroid", "y_centroid")) %>% all())
+  expect_equal(gridded_area$study_area %>% nrow(), 351)
+  expect_true(((gridded_area$study_area@data %>% names()) == list("cell_id", "x_centroid", "y_centroid")) %>% all())
 })
 
 test_that("Making a grid over study area (SpatialLinesDataframe) with all variables.", {
   gridded_area <- SLDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
 
-  expect_equal(gridded_area %>% nrow(), 351)
-  expect_equal(gridded_area@data$LENGTH_ %>% mean() %>% round(2), 3.79)
+  expect_equal(gridded_area$study_area %>% nrow(), 351)
+  expect_equal(gridded_area$study_area@data$LENGTH_ %>% mean() %>% round(2), 3.79)
 })
 
 test_that("Making a grid over study area (SpatialLinesDataframe) with one variable.", {
   gridded_area <- SLDF %>%
-    make_grid(cell_width = 50000, cell_height = 50000, var_names = c("Length", "xxx", "Main_ri"), centroid=T)
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid(var_names = list("Length", "xxx", "Main_ri"))
 
-  expect_equal(gridded_area %>% nrow(), 351)
-  expect_equal(gridded_area@data$Length %>% mean() %>% round(2), 3.79)
+  expect_equal(gridded_area$study_area %>% nrow(), 351)
+  expect_equal(gridded_area$study_area@data$Length %>% mean() %>% round(2), 3.79)
 })
 
 
-test_that("Making a grid over study area (SpatialLines).", {
-  gridded_area <- SLDF %>%
-    as("SpatialLines") %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+test_that("Making a grid over study area (SpatialLinesDataframe) with no data", {
+  sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
+  crs(sl1) <- CRS("EPSG:6933")
+  new_area <- sl1 %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
 
-  expect_equal(gridded_area %>% nrow(), 351)
+  expect_s3_class(new_area, "SDM_area")
 })
 
 
 test_that("Making a grid over SDM_area.", {
-  new_sdm_area <- sdm_area(SPDF)
-
-  gridded_area <- new_sdm_area %>%
-    make_grid(cell_width = 50000, cell_height = 50000, centroid=T)
+  gridded_area <- SPDF %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
 })
@@ -170,15 +192,25 @@ test_that("Making a grid over SDM_area.", {
 
 test_that("Merge raster over SDM_area with all unnamed raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
-    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000)
+    merge_area(system.file("rasters", package="sdmTools"))
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)
 })
 
+test_that("Merge raster over non gridded SDM_area with all unnamed raster variables.", {
+  gridded_area <- SPDF %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    merge_area(system.file("rasters", package="sdmTools"))
+
+  expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
+  expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)
+})
+
+
 test_that("Merge raster over SDM_area with one named raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
-    merge_area(system.file("rasters/wc2.0_bio_5m_01.tif", package="sdmTools"), cell_width = 50000, cell_height = 50000)
+    merge_area(system.file("rasters/wc2.0_bio_5m_01.tif", package="sdmTools"))
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
 })
@@ -186,7 +218,7 @@ test_that("Merge raster over SDM_area with one named raster variables.", {
 
 test_that("Merge raster over SDM_area with all named raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
-    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("bio_5m_01", "bio_5m_02"))
+    merge_area(system.file("rasters", package="sdmTools"), var_names = list("bio_5m_01", "bio_5m_02"))
 
   expect_equal(gridded_area$study_area$bio_5m_01 %>% mean() %>% round(2), 24.37)
   expect_equal(gridded_area$study_area$bio_5m_02 %>% mean() %>% round(2), 11.08)
@@ -194,40 +226,28 @@ test_that("Merge raster over SDM_area with all named raster variables.", {
 
 test_that("Merge raster over SDM_area with only one named raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
-    merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("bio_5m_01"))
+    merge_area(system.file("rasters", package="sdmTools"), var_names = list("bio_5m_01"))
 
   expect_equal(gridded_area$study_area$bio_5m_01 %>% mean() %>% round(2), 24.37)
 })
 
 test_that("Merge raster over SDM_area with none raster variables.", {
-  expect_warning(
+  expect_error(
     a_sdm_area_gridded_area %>%
-      merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list()),
-      "Nothing to do, It must be exists at least one variable to merge and one valid area source."
-  )
+      merge_area(system.file("rasters", package="sdmTools"), var_names = list()))
 })
 
 test_that("Merge raster over SDM_area with invalid area source.", {
-  expect_warning(
+  expect_error(
     a_sdm_area_gridded_area %>%
-      merge_area(system.file("rast", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list()),
-    "Invalid area source."
-  )
+      merge_area(system.file("rast", package="sdmTools"), var_names = list()))
 })
 
 test_that("Merge raster over SDM_area with wrong raster variables names.", {
-  expect_warning(
+  expect_error(
     a_sdm_area_gridded_area %>%
-      merge_area(system.file("rasters", package="sdmTools"), cell_width = 50000, cell_height = 50000, var_names = list("wrong_name")),
+      merge_area(system.file("rasters", package="sdmTools"), list("wrong_name")),
     "At least one variable name is ambiguous. Try to use more specific variable names."
   )
 })
 
-
-test_that("Merge raster over SDM_area with invalid cell width.", {
-  expect_warning(
-    a_sdm_area_gridded_area %>%
-      merge_area(system.file("rasters", package="sdmTools"), cell_width = 0, cell_height = 50000),
-      "Invalid cell width or cell heigth."
-  )
-})

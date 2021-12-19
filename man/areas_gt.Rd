@@ -4,24 +4,21 @@
 \alias{areas_gt}
 \title{Drop noncontiguous polygons with an area smaller or equal lower_bound.}
 \usage{
-areas_gt(an_area, lower_bound = 0)
+areas_gt(an_area = NULL, lower_bound = 0)
 }
 \arguments{
-\item{an_area}{A sp object, commonly a shapefile,  or a SDM_area object representing the area of study.}
+\item{an_area}{A SDM_area object representing the area of study.}
 
 \item{lower_bound}{A lower bound area indicating polygons which it going to dropped out.}
 }
 \value{
-A sp object with remaining disaggregated polygons with area greater than lower_bound, or a SDM_area
-containing a sp object with remaining disaggregated polygons with area greater than lower_bound.
-Furthermore, if no coordinate reference system are used it will be set to EPSG:4326.
+A SDM_area containing a sp object with remaining disaggregated polygons with area greater than lower_bound.
 }
 \description{
 Drop noncontiguous polygons with an area smaller or equal lower_bound.
 }
 \examples{
 \dontrun{
-
 main <- cbind(
   c(0, 0, 1, 1),
   c(0, 1, 1, 0)
@@ -46,7 +43,7 @@ P <- Polygons(
 )
 
 SP <- SpatialPolygons(list(P))
-
-plot(SP)
+new_sdm_area <- sdm_area(SP, "EPSG:6933", c(0.1, 0.1)))
+plot(new_sdm_area)
 }
 }
