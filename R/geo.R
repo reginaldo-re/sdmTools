@@ -645,7 +645,7 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
   an_area$study_area %>%
     .sp_area_geomap(
       title,
-      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
+      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
       lat,
       long,
       group,
@@ -735,7 +735,7 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
   geo_map <- an_area$study_area %>%
     .sp_area_geomap(
       title,
-      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
+      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
       lat,
       long,
       group,
