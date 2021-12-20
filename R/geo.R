@@ -635,15 +635,15 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
 
 #' @export
-area_map <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
-  UseMethod("area_map", an_area)
+area_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+  UseMethod("area_geomap", an_area)
 }
 
 
 #' @export
-area_map.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
   an_area$study_area %>%
-    .sp_area_map(
+    .sp_area_geomap(
       title,
       subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
       lat,
@@ -655,16 +655,16 @@ area_map.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat 
 }
 
 
-.sp_area_map <- function(an_area = NULL, title = "", subtitle = "", lat = "lat", long = "long", group = "group", colour = "black", fill = NA) {
+.sp_area_geomap <- function(an_area = NULL, title = "", subtitle = "", lat = "lat", long = "long", group = "group", colour = "black", fill = NA) {
   number_format <- function(x) format(x, big.mark = ".", decimal.mark = ",", scientific = FALSE)
 
   if (("cell_id" %in% (an_area %>% names()))){
     map_data <- an_area %>%
-      sp_tidy("cell_id")
+      sdm_tidy("cell_id")
   }
   else {
     map_data <- an_area %>%
-      sp_tidy()
+      sdm_tidy()
   }
 
   map_tmp <- ggplot2::ggplot(
@@ -698,7 +698,6 @@ area_map.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat 
       ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
   }
 
-
   return(map_tmp)
 }
 
@@ -724,3 +723,28 @@ repair_area.SpatialPolygons <- function(an_area = NULL){
   )
 }
 
+
+#' @export
+area_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+  UseMethod("area_geomap", an_area)
+}
+
+
+#' @export
+grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+  geo_map <- an_area$study_area %>%
+    .sp_area_geomap(
+      title,
+      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area)), ""),
+      lat,
+      long,
+      group,
+      colour,
+      fill
+    )
+  geo_map <- geo_map +
+    ggplot2::geom_polygon(data = sdm_tidy(a_gridded_area),
+                 ggplot2::aes(x = long, y = lat, group = group),
+                 colour = "#4d4d4d",
+                 fill = NA)
+}

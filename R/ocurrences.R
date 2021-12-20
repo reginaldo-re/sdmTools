@@ -59,7 +59,7 @@ occurrences_to_pa_shapefile <- function(shp_occ, shp_area, sp_names){
     pa_matrix <- pa_matrix %>%
       bind_cols(
         shp_area %>%
-          over(shp_occ[shp_occ@data$species == spp, ])
+          sp::over(shp_occ[shp_occ@data$species == spp, ])
       )
   }
   names(pa_matrix) <- sp_names
@@ -122,7 +122,7 @@ map_of_pa <- function(shp_pa, shp_area, sp_names){
 
   df_temp <- shp_pa@data %>%
     rownames_to_column("id") %>%
-    pivot_longer(-id, names_to = "species", values_to="presence")
+    tidyr::pivot_longer(-id, names_to = "species", values_to="presence")
 
   legend_title  <- ifelse(length(sp_names)==1, sp_names[[1]], "Presence/Absence")
 

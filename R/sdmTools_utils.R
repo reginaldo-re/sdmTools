@@ -1,23 +1,25 @@
+utils::globalVariables(c(":="))
+
 #' @export
-sp_tidy <- function(an_area, region = NULL){
-  UseMethod("sp_tidy", an_area)
+sdm_tidy <- function(an_area, region = NULL){
+  UseMethod("sdm_tidy", an_area)
 }
 
 #' @export
-sp_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
+sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
   an_area %>%
-    .sp_tidy(region) %>%
+    .sdm_tidy(region) %>%
     return()
 }
 
 #' @export
-sp_tidy.SDM_area <- function(an_area, region = NULL){
+sdm_tidy.SDM_area <- function(an_area, region = NULL){
   an_area %>%
-    .sp_tidy(region) %>%
+    .sdm_tidy(region) %>%
     return()
 }
 
-.sp_tidy <- function(an_area, region = NULL) {
+.sdm_tidy <- function(an_area, region = NULL) {
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
       suppressMessages(
@@ -48,7 +50,7 @@ save_gpkg.Spatial <- function(an_area = NULL, file_path = NULL){
 
 #' @export
 save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
-  .save_gpkg_sp(an_area, file_path)
+  .save_gpkg_sp(an_area$study_area, file_path)
 }
 
 .save_gpkg_sp <- function(an_area = NULL, file_path = NULL){

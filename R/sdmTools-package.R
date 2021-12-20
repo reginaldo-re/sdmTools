@@ -1,7 +1,9 @@
 #' @keywords internal
 #' @import dplyr
+#' @import tidyr
 #' @import purrr
 #' @import tibble
+#' @import ggplot2
 #' @importFrom graphics plot
 #' @importFrom methods as
 #' @importFrom methods is
