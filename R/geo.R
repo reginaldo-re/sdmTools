@@ -725,8 +725,8 @@ repair_area.SpatialPolygons <- function(an_area = NULL){
 
 
 #' @export
-area_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
-  UseMethod("area_geomap", an_area)
+grid_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+  UseMethod("grid_geomap", an_area)
 }
 
 
@@ -742,9 +742,11 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
       colour,
       fill
     )
-  geo_map <- geo_map +
-    ggplot2::geom_polygon(data = sdm_tidy(a_gridded_area),
-                 ggplot2::aes(x = long, y = lat, group = group),
-                 colour = "#4d4d4d",
-                 fill = NA)
+  if (!(a_gridded_area %>% is.null())){
+    geo_map <- geo_map +
+        ggplot2::geom_polygon(data = sdm_tidy(a_gridded_area),
+                     ggplot2::aes(x = long, y = lat, group = group),
+                     colour = "#4d4d4d",
+                     fill = NA)
+  }
 }
