@@ -63,16 +63,24 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
     .var.name = "an_area"
   )
   checkmate::assert_class(raster::crs(an_area), "CRS")
+  if (a_crs %>% is.null()){
+    a_crs <- raster::crs(an_area)
+  }
 
   checkmate::assert_string(a_crs, min.chars = 6)
   a_crs <- a_crs %>%
     stringr::str_to_upper()
-  res_crs <- suppressWarnings(try(raster::crs(a_crs)))
-  if (res_crs %>% is("try-error")){
+
+  result_crs <- suppressWarnings(try(raster::crs(a_crs)))
+  if (result_crs %>% is("try-error")){
     stop("Invalid CRS.")
   }
 
-
+  gridded <- .is_gridded(an_area)
+  if (gridded && a_res %>% is.null()){
+    a_res <- an_area %>%
+      .get_resolution()
+  }
   checkmate::assert_numeric(a_res, len = 2, lower = 0.0001)
 
   an_area <- an_area %>%
@@ -82,7 +90,7 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
   sdm_area_tmp <- list(
     crs = a_crs,
     resolution = a_res,
-    gridded = .is_gridded(an_area),
+    gridded = gridded,
     study_area = an_area
   )
 
@@ -102,6 +110,21 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
     raster::area() %>%
     summary()
   return (res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1))
+}
+
+.get_resolution <- function(an_area){
+  if (an_area %>% .is_gridded()){
+    coords <- a_sdm_area_gridded_area$study_area@polygons[[1]]@Polygons[[1]] %>%
+      slot("coords")
+    (coords[1,1] - coords[2,1]) %>%
+      abs() %>%
+      rep(2) %>%
+      c() %>%
+      return()
+  }
+  else {
+    return(NULL)
+  }
 }
 
 #' Drop noncontiguous polygons with an area smaller or equal lower_bound.
@@ -651,7 +674,8 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
       group,
       colour,
       fill
-    )
+    ) %>%
+    return()
 }
 
 
@@ -698,7 +722,8 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
       ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
   }
 
-  return(map_tmp)
+  map_tmp %>%
+    return()
 }
 
 
@@ -749,4 +774,6 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
                      colour = "#4d4d4d",
                      fill = NA)
   }
+  geo_map %>%
+    return()
 }
