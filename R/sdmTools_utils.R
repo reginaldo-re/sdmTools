@@ -21,18 +21,18 @@ sdm_tidy.SDM_area <- function(an_area, region = NULL){
 
 .sdm_tidy <- function(an_area, region = NULL) {
   if (!(region %>% is.null())){
-    if ((region %in% (an_area %>% names()))){
+    if ((region %in% (an_area$study_area %>% names()))){
       suppressMessages(
-        df_tmp <- an_area %>%
+        df_tmp <- an_area$study_area %>%
           broom::tidy(region=region) %>%
           mutate({{region}} := as.integer(id)) %>%
-          left_join(an_area@data, by=region)
+          left_join(an_area@study_area@data, by=region)
       )
       return(df_tmp)
     }
   }
   suppressMessages(
-    df_tmp <- an_area %>%
+    df_tmp <- an_area$study_area %>%
       broom::tidy()
   )
   return(df_tmp)
@@ -69,7 +69,6 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
       fs::dir_exists())
 
     file_path %>%
-      fs::path_dir() %>%
       fs::dir_create(recurse = T)
 
     an_area %>% rgdal::writeOGR(
