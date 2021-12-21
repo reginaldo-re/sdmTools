@@ -49,7 +49,10 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
     .var.name = "an_area"
   )
   result_crs <- suppressWarnings(try(raster::crs(an_area)))
-  checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
+  if(class(result_crs) == "try-error"){
+    raster::crs(an_area) <- raster::crs("EPSG:4326")
+  }
+  #checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
 
   if (a_crs %>% is.null()){
     a_crs <- raster::crs(an_area)
@@ -500,7 +503,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
   )
 
   if (((!is.null(var_names) && length(var_names)==0))){
-    stop("Nothing to do, It must be exists at least one variable to merge and one valid area source.")
+    stop("Nothing to do, it must be exists at least one variable to merge and one valid area source.")
     return(an_area)
   }
   if (is.null(var_names)){
@@ -528,6 +531,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   raster_stack <- raster_list %>%
     raster::stack()
+
+  result_crs <- suppressWarnings(try(raster::crs(raster_stack)))
+  if (class(result_crs) == "try-error"){
+    raster::crs(raster_stack) <- raster::crs("EPSG:4326")
+  }
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
