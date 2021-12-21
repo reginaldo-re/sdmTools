@@ -49,7 +49,7 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
     .var.name = "an_area"
   )
   result_crs <- suppressWarnings(try(raster::crs(an_area)))
-  if(class(result_crs) == "try-error"){
+  if(class(result_crs) == "try-error" || result_crs %>% is.na()){
     raster::crs(an_area) <- raster::crs("EPSG:4326")
   }
   #checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
@@ -533,7 +533,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     raster::stack()
 
   result_crs <- suppressWarnings(try(raster::crs(raster_stack)))
-  if (class(result_crs) == "try-error"){
+  if (class(result_crs) == "try-error" || result_crs %>% is.na()){
     raster::crs(raster_stack) <- raster::crs("EPSG:4326")
   }
 
