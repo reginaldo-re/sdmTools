@@ -65,15 +65,16 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
   checkmate::assert_class(raster::crs(an_area), "CRS")
   if (a_crs %>% is.null()){
     a_crs <- raster::crs(an_area)
-  }
+  } else {
 
-  checkmate::assert_string(a_crs, min.chars = 6)
-  a_crs <- a_crs %>%
-    stringr::str_to_upper()
+    checkmate::assert_string(a_crs, min.chars = 6)
+    a_crs <- a_crs %>%
+      stringr::str_to_upper()
 
-  result_crs <- suppressWarnings(try(raster::crs(a_crs)))
-  if (result_crs %>% is("try-error")){
-    stop("Invalid CRS.")
+    result_crs <- suppressWarnings(try(raster::crs(a_crs)))
+    if (result_crs %>% is("try-error")){
+      stop("Invalid CRS.")
+    }
   }
 
   gridded <- .is_gridded(an_area)
@@ -114,7 +115,7 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
 
 .get_resolution <- function(an_area){
   if (an_area %>% .is_gridded()){
-    coords <- a_sdm_area_gridded_area$study_area@polygons[[1]]@Polygons[[1]] %>%
+    coords <- an_area@polygons[[1]]@Polygons[[1]] %>%
       slot("coords")
     (coords[1,1] - coords[2,1]) %>%
       abs() %>%
@@ -750,7 +751,7 @@ repair_area.SpatialPolygons <- function(an_area = NULL){
 
 
 #' @export
-grid_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+grid_geomap <- function(an_area = NULL, a_gridded_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
   UseMethod("grid_geomap", an_area)
 }
 
