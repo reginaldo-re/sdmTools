@@ -14,31 +14,31 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
 
 #' @export
 sdm_tidy.SDM_area <- function(an_area, region = NULL){
-  an_area %>%
+  an_area$study_area %>%
     .sdm_tidy(region) %>%
     return()
 }
 
 .sdm_tidy <- function(an_area, region = NULL) {
+  suppressMessages(
+    df_tmp <- an_area %>%
+      broom::tidy()
+  )
   if (!(region %>% is.null())){
-    if ((region %in% (an_area$study_area %>% names()))){
-      suppressMessages(
-        df_tmp <- an_area$study_area %>%
-          broom::tidy(region=region) %>%
-          mutate({{region}} := as.integer(id)) %>%
-          left_join(an_area@study_area@data, by=region)
-      )
+    if ((region %in% (an_area %>% names()))){
+      df_tmp <- df_tmp %>%
+        mutate({{region}} := as.integer(id)) %>%
+        select(-id) %>%
+        left_join(an_area@data, by=region)
       return(df_tmp)
     }
   }
-  suppressMessages(
-    df_tmp <- an_area$study_area %>%
-      broom::tidy()
-  )
+
   return(df_tmp)
 }
 
 #' @export
+
 save_gpkg <- function(an_area, file_path){
   UseMethod("save_gpkg", an_area)
 }
@@ -69,6 +69,7 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
       fs::dir_exists())
 
     file_path %>%
+      fs::path_dir() %>%
       fs::dir_create(recurse = T)
 
     an_area %>% rgdal::writeOGR(

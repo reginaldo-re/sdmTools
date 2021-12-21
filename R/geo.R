@@ -750,7 +750,7 @@ repair_area.SpatialPolygons <- function(an_area = NULL){
 
 
 #' @export
-grid_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
+grid_geomap <- function(an_area = NULL, a_gridded_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
   UseMethod("grid_geomap", an_area)
 }
 
