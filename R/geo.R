@@ -28,25 +28,11 @@ sdm_area <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
 }
 
 #' @export
-sdm_area.SpatialPolygons <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
-  if (raster::crs(an_area) %>% is.na()){
-    stop("The study area must have a valid CRS.")
-  }
+sdm_area.Spatial <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
   an_area %>%
     .sp_sdm_area(a_crs, a_res) %>%
     return()
 }
-
-#' @export
-sdm_area.SpatialLines <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
-  if (raster::crs(an_area) %>% is.na()){
-    stop("The study area must have a valid CRS.")
-  }
-  an_area %>%
-    .sp_sdm_area(a_crs, a_res) %>%
-    return()
-}
-
 
 #' @export
 sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
@@ -62,19 +48,15 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  checkmate::assert_class(raster::crs(an_area), "CRS")
+  result_crs <- suppressWarnings(try(raster::crs(an_area)))
+  checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
+
   if (a_crs %>% is.null()){
     a_crs <- raster::crs(an_area)
   } else {
-
     checkmate::assert_string(a_crs, min.chars = 6)
-    a_crs <- a_crs %>%
-      stringr::str_to_upper()
-
     result_crs <- suppressWarnings(try(raster::crs(a_crs)))
-    if (result_crs %>% is("try-error")){
-      stop("Invalid CRS.")
-    }
+    checkmate::assert_class(result_crs, "CRS", .var.name = "a_crs")
   }
 
   gridded <- .is_gridded(an_area)

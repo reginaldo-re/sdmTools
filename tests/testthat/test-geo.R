@@ -35,7 +35,105 @@ a_sdm_area_gridded_area <- a_sdm_area %>%
   make_grid()
 
 
-test_that("Study area is not a vector polygon.", {
+test_that("Creating a study area from SpatialLines.", {
+  sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
+  crs(sl1) <- CRS("EPSG:6933")
+  new_area <- sl1 %>%
+    sdm_area("EPSG:6933", c(50000, 50000))
+
+  expect_equal(new_area$crs, "EPSG:6933")
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+  #expect_error(new_area %>% areas_gt(10000))
+})
+
+test_that("Creating a study area from SpatialPolygons.", {
+  new_area <- SP %>%
+    sdm_area("EPSG:6933", c(50000, 50000))
+
+  expect_equal(new_area$crs, "EPSG:6933")
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+
+test_that("Creating a study area from SpatialLinesDataFrame file keeping the original CRS.", {
+  new_area <- system.file("hydro_uper_prpy.gpkg", package="sdmTools") %>%
+    sdm_area(a_res=c(50000, 50000))
+
+  expect_false(new_area$crs %>% is.na())
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+test_that("Creating a study area from SpatialPolygonsDataFrame file keeping the original CRS.", {
+  new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
+    sdm_area(a_res= c(50000, 50000))
+
+  expect_false(new_area$crs %>% is.na())
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+test_that("Creating a study area from SpatialLinesDataFrame file.", {
+  new_area <- system.file("hydro_uper_prpy.gpkg", package="sdmTools") %>%
+    sdm_area("EPSG:6933", c(50000, 50000))
+
+  expect_false(new_area$crs %>% is.na())
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+test_that("Creating a study area from SpatialPolygonsDataFrame file.", {
+  new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
+    sdm_area("EPSG:6933", c(50000, 50000))
+
+  expect_false(new_area$crs %>% is.na())
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_false(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+
+test_that("Creating a study area from a gridded SpatialPolygonsDataFrame", {
+  new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
+    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    make_grid()
+
+  new_area <- new_area$study_area %>%
+    sdm_area()
+
+  expect_false(new_area$crs %>% is.na())
+  expect_equal(new_area$resolution, c(50000, 50000))
+  expect_true(new_area$gridded)
+  expect_s3_class(new_area, "SDM_area")
+})
+
+test_that("Trying to create an invalid objects SDM_area from a SpatialPolygon object.", {
+  expect_error(NULL %>% sdm_area())
+  expect_error(NULL %>% sdm_area(NULL))
+  expect_error(NULL %>% sdm_area(NULL, NULL))
+  expect_error(NULL %>% sdm_area(NULL, c(1,1)))
+  expect_error(NULL %>% sdm_area("EPSG:6933", c(1,1)))
+
+  expect_error(SP %>% sdm_area())
+  expect_error(SP %>% sdm_area("EPSG:XXXX"))
+  expect_error(SP %>% sdm_area("EPSG:6933"))
+  expect_error(SP %>% sdm_area("EPSG:6933", c(1)))
+  expect_error(SP %>% sdm_area("EPSG:6933", c(0,2)))
+  expect_error(SP %>% sdm_area("EPSG:XXXX", c(0,2)))
+  expect_error(SP %>% sdm_area(a_res= c(0,2)))
+
+  expect_error("123" %>% sdm_area("EPSG:6933", c(0,2)))
+})
+
+
+test_that("Trying to remove an small area from a SpatialLines study area.", {
   sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
   crs(sl1) <- CRS("EPSG:6933")
   new_area <- sl1 %>%
@@ -44,14 +142,14 @@ test_that("Study area is not a vector polygon.", {
   expect_error(new_area %>% areas_gt(10000))
 })
 
-test_that("Removing a single area from projected study area.", {
+test_that("Removing a single area from a SpatialPolygons study area.", {
   new_area <- SP %>%
     sdm_area("EPSG:6933", c(50000, 50000)) %>%
     areas_gt(0.25)
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.09)
 })
 
-test_that("Removing no areas from projected study area.", {
+test_that("Removing no areas from a SpatialPolygons study area.", {
   new_area <- SP %>%
     sdm_area("EPSG:6933", c(50000, 50000)) %>%
     areas_gt(0.1)
@@ -59,42 +157,13 @@ test_that("Removing no areas from projected study area.", {
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
 })
 
-test_that("Removing all areas from projected study area.", {
+test_that("Removing all areas from a SpatialPolygons study area.", {
   new_area <- SP %>%
     sdm_area("EPSG:6933", c(50000, 50000)) %>%
     areas_gt(20)
 
   expect_error(gArea(new_area$study_area))
 })
-
-
-test_that("Removing a single area from sdm_area.", {
-  new_sdm_area <- SP %>% sdm_area("EPSG:6933", c(50000, 50000))
-  new_sdm_area <- areas_gt(new_sdm_area, 0.25)
-
-  expect_s3_class(new_sdm_area, "SDM_area")
-  expect_equal(new_sdm_area$study_area %>% gArea() %>% round(2), 1.09)
-})
-
-test_that("Creating a valid SDM_area.", {
-new_sdm_area <- SP %>% sdm_area("EPSG:6933", c(50000, 50000))
-  expect_s3_class(new_sdm_area, "SDM_area")
-})
-
-test_that("Creating a valid SDM_area from file.", {
-  expect_s3_class(sdm_area(system.file("brasil_uf.gpkg", package="sdmTools"), "EPSG:6933", c(50000, 50000)), "SDM_area")
-})
-
-
-test_that("Trying to create an invalid SDM_area.", {
-  expect_error(NULL %>% sdm_area("EPSG:6933", c(1,1)))
-  expect_error(SP %>% sdm_area())
-  expect_error(SP %>% sdm_area(a_crs = "EPSG:XXXX"))
-  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933"))
-  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933", c(1)))
-  expect_error(SP %>% sdm_area(a_crs = "EPSG:6933", c(0,2)))
-})
-
 
 test_that("Removing no areas from study area using SpatialPolygonsDataframe.", {
   new_area <- SP %>%
@@ -251,3 +320,15 @@ test_that("Merge raster over SDM_area with wrong raster variables names.", {
   )
 })
 
+
+test_that("Ploat an area map from a study area.", {
+  a_ggplot<- a_sdm_area %>% area_geomap()
+
+  expect_s3_class(a_ggplot, "ggplot")
+})
+
+test_that("Ploat an grid map from a gridded study area.", {
+  a_ggplot<- a_sdm_area %>% grid_geomap(a_sdm_area_gridded_area)
+
+  expect_s3_class(a_ggplot, "ggplot")
+})
