@@ -3,12 +3,13 @@ utils::globalVariables(c("where"))
 #' Creates a Study Area
 #'
 #' @param an_area A sp object or a path to a file, commonly a shapefile or geopackage, representing the area of study.
-#' @param a_crs A valid CRS code, for example EPSG:4326.
+#' @param name A name do describe the study area.
+#' @param epsg_code A valid epsg_code code, for example EPSG:4326.
 #' @param a_res A vector containing the resolution of the study area. The format is two numeric values
-#' (width and height) according to CRS used. So, the numeric values can be express different types of units of
+#' (width and height) according to epsg_code used. So, the numeric values can be express different types of units of
 #' measurement, for example deegres or meters.
 #' @return An object representing a study area containing a sp object. Occasional topological errors on polygons of the
-#' object are corrected. If the CRS of the study area is different from the CRS passed to the function, the study
+#' object are corrected. If the epsg_code of the study area is different from the epsg_code passed to the function, the study
 #' area is reproject.
 #' @export
 #' @examples
@@ -18,48 +19,60 @@ utils::globalVariables(c("where"))
 #'    layer = "brasil_uf",
 #'    verbose = FALSE
 #' )
-#' new_sdm_area <- sdm_area(SPDF, "EPSG:6933", c(50000, 50000)))
+#' new_sdm_area <- sdm_area(SPDF, "Brasil", "EPSG:6933", c(50000, 50000)))
 #'
 #' class(new_sdm_area)
 #' }
 #'
-sdm_area <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
+sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   UseMethod("sdm_area", an_area)
 }
 
 #' @export
-sdm_area.Spatial <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
+sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   an_area %>%
-    .sp_sdm_area(a_crs, a_res) %>%
+    .sp_sdm_area(name, epsg_code, a_res) %>%
     return()
 }
 
 #' @export
-sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
+sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   checkmate::assert_file(an_area)
   an_area %>%
     rgdal::readOGR(verbose = F) %>%
-    .sp_sdm_area(a_crs, a_res) %>%
+    .sp_sdm_area(name, epsg_code, a_res) %>%
     return()
 }
-.sp_sdm_area <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
+.sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
+  checkmate::assert_string(name)
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  result_crs <- suppressWarnings(try(raster::crs(an_area)))
-  if(class(result_crs) == "try-error" || result_crs %>% is.na()){
+  area_crs <- suppressWarnings(try(raster::crs(an_area)))
+  if(class(area_crs) == "try-error" || area_crs %>% is.na()){
     raster::crs(an_area) <- raster::crs("EPSG:4326")
   }
   #checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
 
-  if (a_crs %>% is.null()){
-    a_crs <- raster::crs(an_area)
+  checkmate::assert(
+    checkmate::check_null(epsg_code),
+    checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:"),
+    .var.name = "epsg_code"
+  )
+
+  new_crs <- NULL
+  if (epsg_code %>% is.null()){
+    new_crs <- raster::crs(an_area)
   } else {
-    checkmate::assert_string(a_crs, min.chars = 6)
-    result_crs <- suppressWarnings(try(raster::crs(a_crs)))
-    checkmate::assert_class(result_crs, "CRS", .var.name = "a_crs")
+    new_crs <- suppressWarnings(try(raster::crs(epsg_code)))
+    assert(
+      checkmate::check_class(new_crs, "try-error"),
+      checkmate::check_class(new_crs, "CRS"),
+      checkmate::check_scalar_na(new_crs),
+      .var.name = "epsg_code"
+    )
   }
 
   gridded <- .is_gridded(an_area)
@@ -70,11 +83,13 @@ sdm_area.character <- function(an_area = NULL, a_crs = NULL, a_res = NULL){
   checkmate::assert_numeric(a_res, len = 2, lower = 0.0001)
 
   an_area <- an_area %>%
-    sp::spTransform(a_crs %>% raster::crs()) %>%
+    sp::spTransform(new_crs) %>%
     repair_area()
 
   sdm_area_tmp <- list(
-    crs = a_crs,
+    name = name,
+    crs = new_crs,
+    epsg_code = epsg_code,
     resolution = a_res,
     gridded = gridded,
     study_area = an_area

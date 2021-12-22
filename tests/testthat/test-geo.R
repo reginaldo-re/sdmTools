@@ -29,7 +29,8 @@ SPDF <- rgdal::readOGR(system.file("brasil_uf.gpkg", package="sdmTools"), layer 
 SLDF <- rgdal::readOGR(system.file("hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
 a_sdm_area <- SPDF %>%
-  sdm_area("EPSG:6933", c(50000, 50000))
+  sdm_area("Test area", "EPSG:6933", c(50000, 50000))
+
 
 a_sdm_area_gridded_area <- a_sdm_area %>%
   make_grid()
@@ -39,9 +40,11 @@ test_that("Creating a study area from SpatialLines.", {
   sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
   crs(sl1) <- CRS("EPSG:6933")
   new_area <- sl1 %>%
-    sdm_area("EPSG:6933", c(50000, 50000))
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
 
-  expect_equal(new_area$crs, "EPSG:6933")
+  expect_equal(new_area$name, "Test area")
+  expect_equal(new_area$epsg, "EPSG:6933")
+  expect_equal(new_area$crs, raster::crs("EPSG:6933"))
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
   expect_s3_class(new_area, "SDM_area")
@@ -50,9 +53,11 @@ test_that("Creating a study area from SpatialLines.", {
 
 test_that("Creating a study area from SpatialPolygons.", {
   new_area <- SP %>%
-    sdm_area("EPSG:6933", c(50000, 50000))
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
 
-  expect_equal(new_area$crs, "EPSG:6933")
+  expect_equal(new_area$name, "Test area")
+  expect_equal(new_area$epsg, "EPSG:6933")
+  expect_equal(new_area$crs, raster::crs("EPSG:6933"))
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
   expect_s3_class(new_area, "SDM_area")
@@ -61,8 +66,9 @@ test_that("Creating a study area from SpatialPolygons.", {
 
 test_that("Creating a study area from SpatialLinesDataFrame file keeping the original CRS.", {
   new_area <- system.file("hydro_uper_prpy.gpkg", package="sdmTools") %>%
-    sdm_area(a_res=c(50000, 50000))
+    sdm_area(name = "Test area", a_res = c(50000, 50000))
 
+  expect_equal(new_area$name, "Test area")
   expect_false(new_area$crs %>% is.na())
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
@@ -71,8 +77,9 @@ test_that("Creating a study area from SpatialLinesDataFrame file keeping the ori
 
 test_that("Creating a study area from SpatialPolygonsDataFrame file keeping the original CRS.", {
   new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area(a_res= c(50000, 50000))
+    sdm_area(name = "Test area", a_res = c(50000, 50000))
 
+  expect_equal(new_area$name, "Test area")
   expect_false(new_area$crs %>% is.na())
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
@@ -81,8 +88,9 @@ test_that("Creating a study area from SpatialPolygonsDataFrame file keeping the 
 
 test_that("Creating a study area from SpatialLinesDataFrame file.", {
   new_area <- system.file("hydro_uper_prpy.gpkg", package="sdmTools") %>%
-    sdm_area("EPSG:6933", c(50000, 50000))
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
 
+  expect_equal(new_area$name, "Test area")
   expect_false(new_area$crs %>% is.na())
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
@@ -91,8 +99,9 @@ test_that("Creating a study area from SpatialLinesDataFrame file.", {
 
 test_that("Creating a study area from SpatialPolygonsDataFrame file.", {
   new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area("EPSG:6933", c(50000, 50000))
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
 
+  expect_equal(new_area$name, "Test area")
   expect_false(new_area$crs %>% is.na())
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_false(new_area$gridded)
@@ -102,12 +111,13 @@ test_that("Creating a study area from SpatialPolygonsDataFrame file.", {
 
 test_that("Creating a study area from a gridded SpatialPolygonsDataFrame", {
   new_area <- system.file("brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   new_area <- new_area$study_area %>%
-    sdm_area()
+    sdm_area("Test area")
 
+  expect_equal(new_area$name, "Test area")
   expect_false(new_area$crs %>% is.na())
   expect_equal(new_area$resolution, c(50000, 50000))
   expect_true(new_area$gridded)
@@ -115,21 +125,21 @@ test_that("Creating a study area from a gridded SpatialPolygonsDataFrame", {
 })
 
 test_that("Trying to create an invalid objects SDM_area from a SpatialPolygon object.", {
-  expect_error(NULL %>% sdm_area())
-  expect_error(NULL %>% sdm_area(NULL))
-  expect_error(NULL %>% sdm_area(NULL, NULL))
-  expect_error(NULL %>% sdm_area(NULL, c(1,1)))
-  expect_error(NULL %>% sdm_area("EPSG:6933", c(1,1)))
+  expect_error(NULL %>% sdm_area("Test area"))
+  expect_error(NULL %>% sdm_area("Test area", NULL))
+  expect_error(NULL %>% sdm_area("Test area", NULL, NULL))
+  expect_error(NULL %>% sdm_area("Test area", NULL, c(1,1)))
+  expect_error(NULL %>% sdm_area("Test area", "EPSG:6933", c(1,1)))
 
-  expect_error(SP %>% sdm_area())
-  expect_error(SP %>% sdm_area("EPSG:XXXX"))
-  expect_error(SP %>% sdm_area("EPSG:6933"))
-  expect_error(SP %>% sdm_area("EPSG:6933", c(1)))
-  expect_error(SP %>% sdm_area("EPSG:6933", c(0,2)))
-  expect_error(SP %>% sdm_area("EPSG:XXXX", c(0,2)))
+  expect_error(SP %>% sdm_area("Test area"))
+  expect_error(SP %>% sdm_area("Test area", "EPSG:XXXX"))
+  expect_error(SP %>% sdm_area("Test area", "EPSG:6933"))
+  expect_error(SP %>% sdm_area("Test area", "EPSG:6933", c(1)))
+  expect_error(SP %>% sdm_area("Test area", "EPSG:6933", c(0,2)))
+  expect_error(SP %>% sdm_area("Test area", "EPSG:XXXX", c(0,2)))
   expect_error(SP %>% sdm_area(a_res= c(0,2)))
 
-  expect_error("123" %>% sdm_area("EPSG:6933", c(0,2)))
+  expect_error("123" %>% sdm_area("Test area", "EPSG:6933", c(0,2)))
 })
 
 
@@ -137,21 +147,21 @@ test_that("Trying to remove an small area from a SpatialLines study area.", {
   sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
   crs(sl1) <- CRS("EPSG:6933")
   new_area <- sl1 %>%
-    sdm_area("EPSG:6933", c(50000, 50000))
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
 
   expect_error(new_area %>% areas_gt(10000))
 })
 
 test_that("Removing a single area from a SpatialPolygons study area.", {
   new_area <- SP %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     areas_gt(0.25)
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.09)
 })
 
 test_that("Removing no areas from a SpatialPolygons study area.", {
   new_area <- SP %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     areas_gt(0.1)
 
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
@@ -159,7 +169,7 @@ test_that("Removing no areas from a SpatialPolygons study area.", {
 
 test_that("Removing all areas from a SpatialPolygons study area.", {
   new_area <- SP %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     areas_gt(20)
 
   expect_error(gArea(new_area$study_area))
@@ -168,7 +178,7 @@ test_that("Removing all areas from a SpatialPolygons study area.", {
 test_that("Removing no areas from study area using SpatialPolygonsDataframe.", {
   new_area <- SP %>%
     as("SpatialPolygonsDataFrame") %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     areas_gt(0.1)
 
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
@@ -176,7 +186,7 @@ test_that("Removing no areas from study area using SpatialPolygonsDataframe.", {
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all variables.", {
   gridded_area <- SPDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid(var_names = list())
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
@@ -185,7 +195,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with all variables.", {
   gridded_area <- SPDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
@@ -194,7 +204,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) with all var
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with one variable.", {
   gridded_area <- SPDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid(var_names = list("geocodigo"))
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
@@ -205,7 +215,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) with one var
 test_that("Making a grid over study area (SpatialPolygons).", {
   gridded_area <- SPDF %>%
     as("SpatialPolygons") %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
@@ -213,7 +223,7 @@ test_that("Making a grid over study area (SpatialPolygons).", {
 
 test_that("Making a grid over study area (SpatialLinesDataframe) removing all variables.", {
   gridded_area <- SLDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid(var_names = list())
 
   expect_equal(gridded_area$study_area %>% nrow(), 351)
@@ -222,7 +232,7 @@ test_that("Making a grid over study area (SpatialLinesDataframe) removing all va
 
 test_that("Making a grid over study area (SpatialLinesDataframe) with all variables.", {
   gridded_area <- SLDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   expect_equal(gridded_area$study_area %>% nrow(), 351)
@@ -231,7 +241,7 @@ test_that("Making a grid over study area (SpatialLinesDataframe) with all variab
 
 test_that("Making a grid over study area (SpatialLinesDataframe) with one variable.", {
   gridded_area <- SLDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid(var_names = list("Length", "xxx", "Main_ri"))
 
   expect_equal(gridded_area$study_area %>% nrow(), 351)
@@ -243,7 +253,7 @@ test_that("Making a grid over study area (SpatialLinesDataframe) with no data", 
   sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
   crs(sl1) <- CRS("EPSG:6933")
   new_area <- sl1 %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   expect_s3_class(new_area, "SDM_area")
@@ -252,7 +262,7 @@ test_that("Making a grid over study area (SpatialLinesDataframe) with no data", 
 
 test_that("Making a grid over SDM_area.", {
   gridded_area <- SPDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     make_grid()
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
@@ -269,7 +279,7 @@ test_that("Merge raster over SDM_area with all unnamed raster variables.", {
 
 test_that("Merge raster over non gridded SDM_area with all unnamed raster variables.", {
   gridded_area <- SPDF %>%
-    sdm_area("EPSG:6933", c(50000, 50000)) %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     merge_area(system.file("rasters", package="sdmTools"))
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)

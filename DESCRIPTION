@@ -29,4 +29,5 @@ Imports:
     ggplot2,
     broom,
     terra,
-    checkmate
+    checkmate,
+    snakecase

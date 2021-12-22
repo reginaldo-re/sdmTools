@@ -50,6 +50,18 @@ save_gpkg.Spatial <- function(an_area = NULL, file_path = NULL){
 
 #' @export
 save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
+  if (file_path %>% fs::is_dir()){
+    file_name <- paste(
+      an_area$name,
+      an_area$resolution[1],
+      ifelse(!(is.null(an_area$epsg_code)), an_area$epsg_code, ""),
+      ifelse(an_area$gridded, "gridded", "")
+    ) %>%
+      snakecase::to_snake_case() %>%
+      paste0(".gpkg")
+
+    file_path <- paste0(file_path, file_name)
+  }
   .save_gpkg_sp(an_area$study_area, file_path)
 }
 
