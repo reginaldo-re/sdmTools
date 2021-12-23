@@ -67,7 +67,7 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
     new_crs <- raster::crs(an_area)
   } else {
     new_crs <- suppressWarnings(try(raster::crs(epsg_code)))
-    assert(
+    checkmate::assert(
       checkmate::check_class(new_crs, "try-error"),
       checkmate::check_class(new_crs, "CRS"),
       checkmate::check_scalar_na(new_crs),
