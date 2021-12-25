@@ -37,12 +37,39 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 
 #' @export
 sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
-  checkmate::assert_file(an_area)
+  checkmate::assert(
+    checkmate::check_file_exists(an_area),
+    checkmate::check_string(an_area, min.chars = 5)
+  )
+
+  if (! an_area %>% fs::is_file()){
+    an_area_path <- .find_files(an_area)
+    if (an_area_path %>% is.null()){
+      stop("A study area file not found!")
+    }
+    else if (an_area_path %>% length() > 1){
+      stop(
+        paste(
+          "The file name of study area is ambiguous:",
+          paste(
+            an_area_path,
+            sep = ", ",
+            collapse = " "
+          )
+        )
+      )
+    } else {
+      an_area <- an_area_path
+    }
+  }
+
   an_area %>%
     rgdal::readOGR(verbose = F) %>%
     .sp_sdm_area(name, epsg_code, a_res) %>%
     return()
 }
+
+
 .sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   checkmate::assert_string(name)
   checkmate::assert(
@@ -64,9 +91,12 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
 
   new_crs <- NULL
   if (epsg_code %>% is.null()){
-    new_crs <- raster::crs(an_area)
+    new_crs <- an_area %>%
+      raster::crs()
   } else {
-    new_crs <- suppressWarnings(try(raster::crs(epsg_code)))
+    new_crs <- suppressWarnings(
+        try(raster::crs(epsg_code))
+      )
     checkmate::assert(
       checkmate::check_class(new_crs, "try-error"),
       checkmate::check_class(new_crs, "CRS"),
@@ -75,7 +105,9 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
     )
   }
 
-  gridded <- .is_gridded(an_area)
+  gridded <- an_area %>%
+    .is_gridded()
+
   if (gridded && a_res %>% is.null()){
     a_res <- an_area %>%
       .get_resolution()
@@ -95,38 +127,62 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
     study_area = an_area
   )
 
-  return (
-    structure(
-      sdm_area_tmp,
-      class= "SDM_area"
-    )
-  )
+  structure(
+    sdm_area_tmp,
+    class= "SDM_area"
+  ) %>%
+    return()
 }
 
 .is_gridded <- function(an_area){
-  if (!(an_area %>% is("SpatialPolygonsDataFrame"))) {
+  if (! an_area %>% is("SpatialPolygonsDataFrame")) {
     return(F)
   }
   res_summ <- an_area %>%
     raster::area() %>%
     summary()
-  return (res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1))
+
+  res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1) %>%
+    return ()
 }
 
 .get_resolution <- function(an_area){
   if (an_area %>% .is_gridded()){
-    coords <- an_area@polygons[[1]]@Polygons[[1]] %>%
-      slot("coords")
-    (coords[1,1] - coords[2,1]) %>%
-      abs() %>%
+    coords <- an_area@polygons %>%
+      magrittr::extract2(1) %>%
+      slot("Polygons") %>%
+      magrittr::extract2(1) %>%
+      slot(("coords"))
+
+    abs(coords[1,1] - coords[2,1]) %>%
       rep(2) %>%
       c() %>%
       return()
   }
   else {
-    return(NULL)
+    NULL %>%
+      return()
   }
 }
+
+.find_files <- function(an_area = NULL){
+  checkmate::check_string(an_area, min.chars = 5)
+  file_list <- here::here() %>%
+    fs::dir_ls(recurse = T, type = "file") %>%
+    stringr::str_subset(stringr::fixed(an_area, ignore_case = T))
+
+  if ((file_list %>% length() >= 1)){
+    file_list %>%
+      return()
+  }
+  else {
+    NULL %>%
+      return()
+  }
+}
+
+
+
 
 #' Drop noncontiguous polygons with an area smaller or equal lower_bound.
 #'
@@ -178,7 +234,9 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0) {
   checkmate::check_class(an_area$study_area, "SpatialPolygons")
   an_area$study_area <- an_area$study_area %>%
     .sp_areas_gt(lower_bound)
-  return(an_area)
+
+  an_area %>%
+    return()
 }
 
 .sp_areas_gt <- function(an_area = NULL, lower_bound = 0) {
@@ -192,14 +250,14 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0) {
     raster::aggregate() %>%
     raster::disaggregate()
 
-  if (is.na(raster::crs(an_area_agg))){
+  if (an_area_agg %>% raster::crs() %>% is.na()){
     remain_areas_agg <- an_area_agg[rgeos::gArea(an_area_agg, byid = T) > lower_bound, ]
   }
   else {
     remain_areas_agg <- an_area_agg[raster::area(an_area_agg) > lower_bound, ]
   }
 
-  if ((remain_areas_agg@polygons %>% length())>0){
+  if (remain_areas_agg@polygons %>% length() > 0){
     an_area %>%
       raster::intersect(remain_areas_agg) %>%
       return()
@@ -266,7 +324,9 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
   )
   if (an_area$gridded){
     warning("Nothing to do, the grid over that study area already exists.")
-    return(an_area)
+
+    an_area %>%
+      return()
   }
 
   if (an_area$study_area %>% is("SpatialPolygons")){
@@ -279,7 +339,8 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
 
   an_area$gridded <- T
 
-  return(an_area)
+  an_area %>%
+    return()
 }
 
 .make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, has_centroid=T){
@@ -341,11 +402,15 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
 
   shp_area_bkp <- an_area
 
-  shp_tmp_file <- tempfile() %>% paste0(".gpkg")
+  shp_tmp_file <- tempfile() %>%
+    paste0(".gpkg")
+
   an_area %>%
     save_gpkg(shp_tmp_file)
 
-  raster_tmp_file <- tempfile() %>% paste0(".tif")
+  raster_tmp_file <- tempfile() %>%
+    paste0(".tif")
+
   raster_area <- an_area %>%
     raster::raster(vals=0) %>%
     raster::writeRaster(
@@ -424,10 +489,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
       dplyr::across(where(is.factor), as.numeric)
     )
 
-  if (!is.null(var_names)){
+  if (! var_names %>% is.null()){
     var_names <- c("cell_id") %>%
       purrr::prepend(var_names)
-    if (length(var_names)>0){
+
+    if (var_names %>% length() > 0){
       a_df <- a_df %>%
         dplyr::select(var_names %>% unlist() %>% dplyr::contains())
       #dplyr::rename_all(tolower) %>%
@@ -446,7 +512,8 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
         dplyr::select(-everything())
     }
   }
-  return(a_df)
+  a_df %>%
+    return()
 }
 
 
@@ -489,7 +556,8 @@ merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL){
 #' @export
 merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL) {
   warning("Nothing to do, an_area must be an SDM_area object.")
-  return(an_area)
+  an_area %>%
+    return()
 }
 
 #' @export
@@ -517,13 +585,15 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
   )
 
-  if (((!is.null(var_names) && length(var_names)==0))){
+  if ((! var_names %>% is.null()) && (var_names %>% length()==0)){
     stop("Nothing to do, it must be exists at least one variable to merge and one valid area source.")
-    return(an_area)
+    an_area %>%
+      return()
   }
-  if (is.null(var_names)){
+  if (var_names %>% is.null()){
     if (to_merge_area %>% fs::is_file()){
-      to_merge_area <- to_merge_area %>% fs::path_dir()
+      to_merge_area <- to_merge_area %>%
+        fs::path_dir()
     }
     var_names <- to_merge_area %>%
       fs::dir_ls(type = "file") %>%
@@ -539,21 +609,25 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     fs::dir_ls(type = "file") %>%
     purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
 
-  if (length(raster_list)!=length(var_names)){
+  if (raster_list %>% length() != var_names %>% length()){
     stop("At least one variable name is ambiguous. Try to use more specific variable names.")
-    return(an_area)
+    an_area %>%
+      return()
   }
 
   raster_stack <- raster_list %>%
     raster::stack()
 
-  result_crs <- suppressWarnings(try(raster::crs(raster_stack)))
-  if (class(result_crs) == "try-error" || result_crs %>% is.na()){
+  result_crs <- suppressWarnings(
+      try(raster::crs(raster_stack))
+    )
+  if (result_crs %>% class() == "try-error" || result_crs %>% is.na()){
     raster::crs(raster_stack) <- raster::crs("EPSG:4326")
   }
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
+
   raster_stack %>%
     raster::writeRaster(
       raster_tmp_file,
@@ -566,6 +640,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   shp_countour_file <- tempfile() %>%
     paste0(".gpkg")
+
   an_area$study_area %>%
     raster::aggregate(dissolve=T) %>%
     #rgeos::gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
@@ -575,17 +650,20 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   shp_area_file <- tempfile() %>%
     paste0(".gpkg")
+
   an_area$study_area %>%
     save_gpkg(shp_area_file)
 
   shp_grid_file <- tempfile() %>%
     paste0(".gpkg")
+
   an_area$study_area %>%
     as("SpatialPolygonsDataFrame") %>%
     save_gpkg(shp_grid_file)
 
   raster_file_reescaled_countour <- tempfile() %>%
     paste0(".tif")
+
   raster_reescaled_countour <- gdalUtils::gdalwarp(
     raster_tmp_file,
     raster_file_reescaled_countour,
@@ -634,8 +712,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   raster_grid <- raster_grid %>%
     terra::rast() %>%
-    terra::mask((raster_reescaled_countour_masked %>% terra::rast())[[1]])
-
+    terra::mask(
+        raster_reescaled_countour_masked %>%
+          terra::rast() %>%
+          magrittr::extract2(1)
+      )
 
   grid_cells <- raster_grid %>%
     as.vector() %>%
@@ -648,7 +729,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   shp_grid@data$cell_id <- 1:length(grid_cells)
   shp_grid %>%
-    sp::spChFIDs(as.character(1:length(grid_cells)))
+    sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
   suppressMessages(
     shp_grid@data <- shp_grid@data %>% bind_cols(
@@ -659,7 +740,9 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     )
   )
   an_area$study_area <-shp_grid
-  return(an_area)
+
+  an_area %>%
+    return()
 }
 
 
@@ -743,7 +826,9 @@ repair_area.default <- function(an_area = NULL){
 }
 
 repair_area.SpatialPolygons <- function(an_area = NULL){
-  res_crs <- suppressWarnings(try(raster::crs(an_area)))
+  res_crs <- suppressWarnings(
+      try(raster::crs(an_area))
+    )
   if (res_crs %>% is("try-error")){
     stop("Invalid CRS.")
   }
@@ -775,10 +860,12 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
     )
   if (!(a_gridded_area %>% is.null())){
     geo_map <- geo_map +
-        ggplot2::geom_polygon(data = sdm_tidy(a_gridded_area),
-                     ggplot2::aes(x = long, y = lat, group = group),
-                     colour = "#4d4d4d",
-                     fill = NA)
+        ggplot2::geom_polygon(
+            data = sdm_tidy(a_gridded_area),
+            ggplot2::aes(x = long, y = lat, group = group),
+            colour = "#4d4d4d",
+            fill = NA
+          )
   }
   geo_map %>%
     return()
