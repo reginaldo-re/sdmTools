@@ -182,8 +182,6 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
 }
 
 
-
-
 #' Drop noncontiguous polygons with an area smaller or equal lower_bound.
 #'
 #' @param an_area A SDM_area object representing the area of study.
