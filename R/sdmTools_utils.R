@@ -80,8 +80,6 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL, file_name = NUL
   }
   if (file_path %>% is.null()){
     file_path <- "."
-  } else {
-    file_path <- file_path %>% fs::path_dir()
   }
 
   if (file_name %>% fs::path_ext() == ""){
