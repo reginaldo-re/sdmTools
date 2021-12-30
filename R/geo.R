@@ -39,7 +39,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   checkmate::assert(
     checkmate::check_file_exists(an_area),
-    checkmate::check_string(an_area, min.chars = 5)
+    checkmate::check_string(an_area, min.chars = 3)
   )
 
   if (! an_area %>% fs::is_file()){

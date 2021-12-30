@@ -39,18 +39,18 @@ sdm_tidy.SDM_area <- function(an_area, region = NULL){
 
 #' @export
 
-save_gpkg <- function(an_area, file_path){
-  UseMethod("save_gpkg", an_area)
+save_gpkg <- function(an_area, file_path, file_name){
+  UseMethod("save_gpkg", an_area, file_name)
 }
 
 #' @export
-save_gpkg.Spatial <- function(an_area = NULL, file_path = NULL){
-  .save_gpkg_sp(an_area, file_path)
+save_gpkg.Spatial <- function(an_area = NULL, file_path = NULL, file_name = NULL){
+  .save_gpkg_sp(an_area, file_path, file_name)
 }
 
 #' @export
-save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL){
-  if (file_path %>% fs::is_dir()){
+save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL, file_name = NULL){
+  if (file_name %>% is.null()){
     file_name <- paste(
       an_area$name,
       an_area$resolution[1],
