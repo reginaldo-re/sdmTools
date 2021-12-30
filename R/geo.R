@@ -404,7 +404,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
     paste0(".gpkg")
 
   an_area %>%
-    save_gpkg(shp_tmp_file)
+    save_gpkg(file_name = shp_tmp_file)
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
@@ -644,20 +644,20 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     #rgeos::gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
     #rgeos::gUnionCascaded() %>%
     as("SpatialPolygonsDataFrame") %>%
-    save_gpkg(shp_countour_file)
+    save_gpkg(file_name = shp_countour_file)
 
   shp_area_file <- tempfile() %>%
     paste0(".gpkg")
 
   an_area$study_area %>%
-    save_gpkg(shp_area_file)
+    save_gpkg(file_name = shp_area_file)
 
   shp_grid_file <- tempfile() %>%
     paste0(".gpkg")
 
   an_area$study_area %>%
     as("SpatialPolygonsDataFrame") %>%
-    save_gpkg(shp_grid_file)
+    save_gpkg(file_name = shp_grid_file)
 
   raster_file_reescaled_countour <- tempfile() %>%
     paste0(".tif")
