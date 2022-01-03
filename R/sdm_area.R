@@ -202,6 +202,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
       rgeos::gBuffer(byid=TRUE, width=0) %>%
       return()
   )
+<<<<<<< HEAD
 }
 
 .guess_file_name <- function(an_area = NULL){
@@ -214,10 +215,16 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     snakecase::to_snake_case() %>%
     paste0(".gpkg") %>%
     return()
+=======
+>>>>>>> fa9e955884bcc09ea7ae762beb8a12c795746c8b
 }
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fa9e955884bcc09ea7ae762beb8a12c795746c8b
 
 
 

@@ -137,7 +137,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
     paste0(".gpkg")
 
   an_area %>%
+<<<<<<< HEAD
     save_gpkg(shp_tmp_file)
+=======
+    save_gpkg(file_name = shp_tmp_file)
+>>>>>>> fa9e955884bcc09ea7ae762beb8a12c795746c8b
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
