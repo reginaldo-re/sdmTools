@@ -1,43 +1,60 @@
 #' @export
-save_gpkg <- function(an_area, file_name, file_path){
+save_gpkg <- function(an_area, file_path, file_name){
   UseMethod("save_gpkg", an_area)
 }
 
 #' @export
-save_gpkg.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  if (file_name %>% is.null() || file_name == "" || file_name %>% fs::path_ext() == "") {
-    file_name <- .guess_file_name(an_area)
+save_gpkg.SDM_area <- function(an_area = NULL, file_path = NULL, file_name = NULL){
+  if (file_name %>% is.null()){
+    file_name <- paste(
+      an_area$name,
+      an_area$resolution[1],
+      ifelse(!(is.null(an_area$epsg_code)), an_area$epsg_code, ""),
+      ifelse(an_area$gridded, "gridded", "")
+    ) %>%
+      snakecase::to_snake_case() %>%
+      paste0(".gpkg")
+
+    file_path <- paste0(file_path, file_name)
   }
-  .sp_save_gpkg(an_area$study_area, file_name, file_path)
+  .sp_save_gpkg(an_area$study_area, file_path, file_name)
 }
 
 
 #' @export
-save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  .sp_save_gpkg(an_area, file_name, file_path)
+save_gpkg.Spatial <- function(an_area = NULL, file_path = NULL, file_name = NULL){
+  .sp_save_gpkg(an_area, file_path, file_name)
 }
 
-.sp_save_gpkg <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  checkmate::check_class(an_area, "Spatial")
-  checkmate::assert_string(file_name)
+
+.sp_save_gpkg <- function(an_area = NULL, file_path = NULL, file_name = NULL){
+  if (an_area %>% is.null()){
+    stop("an_area must be a object of type Spatial* or SDM_area.")
+  }
+
+  if (file_name %>% is.null()){
+    stop("Invalid file name.")
+  }
 
   if (file_name %>% fs::path_dir() != "."){
-    checkmate::check_null(file_path)
     file_path <- file_name %>% fs::path_dir()
+    file_name <- file_name %>% fs::path_file()
   }
-  checkmate::assert_string(file_path)
+  if (file_path %>% is.null()){
+    file_path <- "."
+  }
 
-  file_name <- file_name %>%
-    fs::path_file() %>%
-    fs::path_ext_remove() %>%
-    paste0(".gpkg")
-
+  if (file_name %>% fs::path_ext() == ""){
+    file_name <- paste0(file_name, ".gpkg")
+  }
   result = tryCatch({
     clear_dir <- file_path %>%
+      fs::path_dir() %>%
       fs::dir_exists() %>%
       not()
 
     file_path %>%
+      fs::path_dir() %>%
       fs::dir_create(recurse = T)
 
     an_area %>% rgdal::writeOGR(
@@ -47,13 +64,11 @@ save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL
       overwrite_layer = T
     )
   }, error = function(e){
-    e$message %>% print()
-    "Error saving file:" %>%
-      paste0(fs::path(file_path, file_name)) %>%
-      paste0(".")
-
+    print(e$message)
+    print(paste0("Error saving file:", fs::path(file_path, file_name, ".")))
     if (clear_dir){
       file_path %>%
+        fs::path_dir() %>%
         fs::dir_delete()
     }
   })
