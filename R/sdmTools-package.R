@@ -6,6 +6,7 @@
 #' @importFrom graphics plot
 #' @importFrom methods as
 #' @importFrom methods is
+#' @importFrom magrittr %>%
 "_PACKAGE"
 
 ## usethis namespace: start
