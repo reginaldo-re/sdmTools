@@ -216,9 +216,3 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     return()
 }
 
-
-
-
-
-
-
