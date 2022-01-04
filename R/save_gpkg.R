@@ -35,7 +35,7 @@ save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL
   result = tryCatch({
     clear_dir <- file_path %>%
       fs::dir_exists() %>%
-      not()
+      magrittr::not()
 
     file_path %>%
       fs::dir_create(recurse = T)
