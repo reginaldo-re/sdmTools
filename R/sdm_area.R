@@ -206,10 +206,9 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 
 .guess_file_name <- function(an_area = NULL){
   paste(
-    an_area$name,
+    an_area$name %>% fs::path_ext_remove(),
     an_area$resolution[1],
-    ifelse(!(is.null(an_area$epsg_code)), an_area$epsg_code, ""),
-    ifelse(an_area$gridded, "gridded", "")
+    ifelse(!(is.null(an_area$epsg_code)), an_area$epsg_code, "")
   ) %>%
     snakecase::to_snake_case() %>%
     paste0(".gpkg") %>%
