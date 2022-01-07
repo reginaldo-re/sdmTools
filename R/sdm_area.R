@@ -149,7 +149,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     .repair_area()
 
   sdm_area_tmp <- list(
-    name = name %>% fs::path_file() %>%  fs::path_ext_remove(),
+    name = (name %>% fs::path_file() %>%  fs::path_ext_remove()),
     crs = new_crs,
     epsg_code = epsg_code,
     resolution = a_res,
@@ -207,8 +207,9 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 .guess_file_name <- function(an_area = NULL){
   paste(
     an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
+    ifelse(an_area$gridded && ! an_area$name %>% stringr::str_detect(stringr::fixed("_grid")), "_grid", ""),
     an_area$resolution[1],
-    ifelse(!(is.null(an_area$epsg_code)), an_area$epsg_code, "")
+    ifelse(! an_area$epsg_code %>% is.null() && ! an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)), an_area$epsg_code, "")
   ) %>%
     snakecase::to_snake_case() %>%
     paste0(".gpkg") %>%
