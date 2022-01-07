@@ -28,27 +28,9 @@ merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names=N
 
 #' @export
 merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
-  checkmate::assert(
-    checkmate::check_string(new_name, min.chars = 1),
-    checkmate::check_logical(new_name, len = 1)
-  )
-
   if (!an_area$gridded){
     an_area <- an_area %>%
       make_grid.SDM_area(var_names)
-  }
-
-  if (checkmate::test_logical(new_name, len = 1)){
-    if (new_name) {
-      new_name <- an_area$name %>%
-        paste0("_", to_merge_area$name)
-    }
-    else {
-      new_name <- NULL
-    }
-  } else if (checkmate:test_string(new_name, min.chars = 1)){
-    new_name <- an_area$name %>%
-      paste0("_", new_name)
   }
 
   an_area %>%
@@ -70,11 +52,9 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
   )
   checkmate::assert(
-    checkmate::check_null(new_name),
-    checkmate::check_string(new_name, min.chars = 1)
+    checkmate::check_string(new_name, min.chars = 1),
+    checkmate::check_logical(new_name, len = 1)
   )
-
-
 
   if (var_names %>% is.null()){
     if (to_merge_area %>% fs::is_file()){
@@ -224,6 +204,16 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     )
   )
   an_area$study_area <- shp_grid
+
+  if (checkmate::test_logical(new_name, len = 1)){
+    if (new_name) {
+      an_area$name <- an_area$name %>%
+        paste0("_", to_merge_area %>% fs::path_file())
+    }
+  } else if (checkmate:test_string(new_name, min.chars = 1)){
+    an_area$name <- an_area$name %>%
+      paste0("_", new_name)
+  }
 
   an_area %>%
     return()
