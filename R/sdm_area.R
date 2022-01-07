@@ -149,7 +149,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     .repair_area()
 
   sdm_area_tmp <- list(
-    name = name,
+    name = name %>% fs::path_file() %>%  fs::path_ext_remove(),
     crs = new_crs,
     epsg_code = epsg_code,
     resolution = a_res,
