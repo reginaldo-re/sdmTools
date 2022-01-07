@@ -211,8 +211,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
         paste0("_", to_merge_area %>% fs::path_file())
     }
   } else if (checkmate::test_string(new_name, min.chars = 1)){
-    an_area$name <- an_area$name %>%
-      paste0("_", new_name)
+    an_area$name <- new_name
   }
 
   an_area %>%
