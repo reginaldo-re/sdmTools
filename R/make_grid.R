@@ -37,18 +37,18 @@
 #'  )
 #' gridded_area %>% plot()
 #' }
-make_grid <- function(an_area = NULL, var_names = NULL, has_centroid=T){
+make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, has_centroid=T){
   UseMethod("make_grid", an_area)
 }
 
 #' @export
-make_grid.default <- function(an_area = NULL, var_names = NULL, has_centroid=T){
+make_grid.default <- function(an_area = NULL, var_names = NULL, new_name = F, has_centroid=T){
   warning("Nothing to do, an_area must be an SDM_area object.")
   return(an_area)
 }
 
 #' @export
-make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
+make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, centroid=T){
   checkmate::assert(
     checkmate::check_class(an_area$study_area, "SpatialPolygons"),
     checkmate::check_class(an_area$study_area, "SpatialLines")
@@ -59,22 +59,36 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
     an_area %>%
       return()
   }
+  checkmate::assert(
+    checkmate::check_string(new_name, min.chars = 1),
+    checkmate::check_logical(new_name, len = 1)
+  )
 
   if (an_area$study_area %>% is("SpatialPolygons")){
     an_area$study_area <- an_area$study_area %>%
-      .make_grid_SpatialPolygons(an_area$resolution, var_names, centroid)
+      .make_grid_SpatialPolygons(an_area$resolution, var_names, new_name, centroid)
   } else if (an_area$study_area %>% is("SpatialLines")){
     an_area$study_area <- an_area$study_area %>%
-      .make_grid_SpatialLines(an_area$resolution, var_names, centroid)
+      .make_grid_SpatialLines(an_area$resolution, var_names, new_name, centroid)
   }
 
   an_area$gridded <- T
+
+  if (checkmate::test_logical(new_name, len = 1)){
+    if (new_name) {
+      an_area$name <- an_area$name %>%
+        paste0("_gridded")
+    }
+  } else if (checkmate:test_string(new_name, min.chars = 1)){
+      an_area$name <- an_area$name %>%
+        paste0("_", new_name)
+  }
 
   an_area %>%
     return()
 }
 
-.make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, has_centroid=T){
+.make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, has_centroid=T){
   checkmate::check_class(an_area, "SpatialPolygons")
 
   an_area <- an_area %>%
@@ -89,7 +103,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
     return()
 }
 
-.make_grid_SpatialLines <- function(an_area = NULL, a_res = NULL, var_names = NULL, has_centroid=T){
+.make_grid_SpatialLines <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, has_centroid=T){
   checkmate::check_class(an_area, "SpatialLines")
 
   an_area <- an_area %>%
@@ -110,11 +124,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, centroid=T){
   }
 
   an_area %>%
-    .sp_make_grid(a_res, var_names, has_centroid) %>%
+    .sp_make_grid(a_res, var_names, new_name, has_centroid) %>%
     return()
 }
 
-.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, has_centroid=T){
+.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, has_centroid=T){
   cell_id <- grid_cell_id <- value <- x <- y <- NULL
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),

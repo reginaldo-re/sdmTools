@@ -33,29 +33,34 @@
 #' new_sdm_area <- sdm_area(SP, "EPSG:6933", c(0.1, 0.1)))
 #' plot(new_sdm_area)
 #' }
-areas_gt <- function(an_area = NULL, lower_bound = 0){
+areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F){
   UseMethod("areas_gt")
 }
 
 #' @export
-areas_gt.default <- function(an_area = NULL, lower_bound = 0) {
+areas_gt.default <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   warning("Nothing to do, an_area must be an SDM_area object.")
   return(an_area)
 }
 
 #' @export
-areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0) {
+areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   checkmate::check_class(an_area$study_area, "SpatialPolygons")
   an_area$study_area <- an_area$study_area %>%
-    .sp_areas_gt(lower_bound)
+    .sp_areas_gt(lower_bound, new_name)
 
   an_area %>%
     return()
 }
 
-.sp_areas_gt <- function(an_area = NULL, lower_bound = 0) {
+.sp_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   checkmate::check_class(an_area, "SpatialPolygons")
   checkmate::assert_numeric(lower_bound, len = 1, lower = 0.0)
+
+  checkmate::assert(
+    checkmate::check_string(new_name, min.chars = 1),
+    checkmate::check_logical(new_name, len = 1)
+  )
 
   an_area <- an_area %>%
     .repair_area()
@@ -69,6 +74,11 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0) {
   }
   else {
     remain_areas_agg <- an_area_agg[raster::area(an_area_agg) > lower_bound, ]
+  }
+
+  if (checkmate::test_string(new_name, min.chars = 1)){
+    an_area$name <- an_area$name %>%
+      paste0("_", new_name)
   }
 
   if (remain_areas_agg@polygons %>% length() > 0){

@@ -4,7 +4,12 @@
 \alias{merge_area}
 \title{Merge rasters over a gridded study area.}
 \usage{
-merge_area(an_area = NULL, to_merge_area = NULL, var_names = NULL)
+merge_area(
+  an_area = NULL,
+  to_merge_area = NULL,
+  var_names = NULL,
+  new_name = F
+)
 }
 \arguments{
 \item{an_area}{A SDM_area object with cells covering the study area.}

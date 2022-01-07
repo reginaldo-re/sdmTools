@@ -15,30 +15,48 @@
 #' \dontrun{
 #' aaa
 #' }
-merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL){
+merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
   UseMethod("merge_area", an_area)
 }
 
 #' @export
-merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL) {
+merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F) {
   warning("Nothing to do, an_area must be an SDM_area object.")
   an_area %>%
     return()
 }
 
 #' @export
-merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL){
+merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
+  checkmate::assert(
+    checkmate::check_string(new_name, min.chars = 1),
+    checkmate::check_logical(new_name, len = 1)
+  )
+
   if (!an_area$gridded){
     an_area <- an_area %>%
       make_grid.SDM_area(var_names)
   }
+
+  if (checkmate::test_logical(new_name, len = 1)){
+    if (new_name) {
+      new_name <- an_area$name %>%
+        paste0("_", to_merge_area$name)
+    }
+    else {
+      new_name <- NULL
+    }
+  } else if (checkmate:test_string(new_name, min.chars = 1)){
+    new_name <- an_area$name %>%
+      paste0("_", new_name)
+  }
+
   an_area %>%
-    .sp_merge_area(to_merge_area, var_names) %>%
+    .sp_merge_area(to_merge_area, var_names, new_name) %>%
     return()
 }
 
-
-.sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL){
+.sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL){
   checkmate::check_class(an_area, "SDM_area")
   checkmate::assert(
     checkmate::check_file_exists(to_merge_area),
@@ -51,6 +69,12 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     checkmate::check_null(var_names),
     checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
   )
+  checkmate::assert(
+    checkmate::check_null(new_name),
+    checkmate::check_string(new_name, min.chars = 1)
+  )
+
+
 
   if (var_names %>% is.null()){
     if (to_merge_area %>% fs::is_file()){
@@ -199,7 +223,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
         dplyr::rename_all(~ (var_names %>% unlist()))
     )
   )
-  an_area$study_area <-shp_grid
+  an_area$study_area <- shp_grid
 
   an_area %>%
     return()

@@ -4,7 +4,7 @@
 \alias{areas_gt}
 \title{Drop noncontiguous polygons with an area smaller or equal lower_bound.}
 \usage{
-areas_gt(an_area = NULL, lower_bound = 0)
+areas_gt(an_area = NULL, lower_bound = 0, new_name = F)
 }
 \arguments{
 \item{an_area}{A SDM_area object representing the area of study.}
