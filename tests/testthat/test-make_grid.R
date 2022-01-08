@@ -5,19 +5,21 @@ test_that("Trying to make a grid over a non SDM_area object.", {
 test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all variables.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    make_grid(var_names = list())
+    make_grid(var_names = list(), new_name = T)
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
   expect_true(((gridded_area$study_area@data %>% names()) == c("cell_id", "x_centroid", "y_centroid")) %>% all())
+  expect_string(gridded_area$name, "Test area_grid")
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with all variables.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    make_grid()
+    make_grid(new_name = "test_area_grid")
 
   expect_equal(gridded_area$study_area %>% nrow(), 3634)
   expect_equal(gridded_area$study_area@data$geocodigo %>% mean() %>% round(2), 12.10)
+  expect_string(gridded_area$name, "test_area_grid")
 })
 
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with one variable.", {

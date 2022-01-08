@@ -74,12 +74,12 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
   an_area$gridded <- T
 
-  if (checkmate::test_logical(new_name, len = 1)){
+  if (checkmate::test_logical(new_name, min.len = 1)){
     if (new_name) {
       an_area$name <- an_area$name %>%
         paste0("_grid")
     }
-  } else if (checkmate:test_string(new_name, min.chars = 1)){
+  } else if (checkmate::test_string(new_name)){
       an_area$name <- an_area$name %>%
         paste0("_", new_name)
   }
