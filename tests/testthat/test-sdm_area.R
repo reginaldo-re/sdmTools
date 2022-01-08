@@ -132,6 +132,13 @@ test_that("Trying to get resolution from a not gridded SDM_area.", {
   expect_null(NULL %>% .get_resolution())
 })
 
+test_that("Get file name.", {
+  file_name_tmp <- "brasil" %>%
+    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
+    .guess_file_name()
+
+  expect_string(file_name_tmp, "test_area_50000_epsg_6933.gpkg")
+})
 
 test_that("Repair an area with invalid CRS.", {
   expect_error(
