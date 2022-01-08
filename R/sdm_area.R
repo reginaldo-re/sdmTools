@@ -154,7 +154,8 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     epsg_code = epsg_code,
     resolution = a_res,
     gridded = gridded,
-    study_area = an_area
+    study_area = an_area,
+    scenarios = list()
   )
 
   structure(
