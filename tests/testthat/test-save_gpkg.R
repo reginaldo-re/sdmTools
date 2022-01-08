@@ -12,11 +12,10 @@ test_that("Saving a SDM_area to gpkg file.", {
 
 test_that("Saving SPDF to gpkg file.", {
   withr::with_file(a_file <- tempfile(),
-                  {
-                    SPDF %>%
-                      save_gpkg(file_name = a_file)
-
-                    expect_true(fs::is_file(fs::path(fs::path_dir(a_file), fs::path_file(a_file))))
-                  }
+    {
+      SPDF %>%
+        save_gpkg(file_name = a_file)
+      expect_true(fs::is_file(paste0(a_file, ".gpkg")))
+    }
   )
 })
