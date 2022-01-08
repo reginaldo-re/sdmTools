@@ -36,24 +36,7 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
   )
 
   if (! an_area %>% fs::is_file()){
-    an_area_path <- .find_files(an_area)
-    if (an_area_path %>% is.null()){
-      stop("A study area file not found!")
-    }
-    else if (an_area_path %>% length() > 1){
-      stop(
-        paste(
-          "The file name of study area is ambiguous:",
-          paste(
-            an_area_path,
-            sep = ", ",
-            collapse = " "
-          )
-        )
-      )
-    } else {
-      an_area <- an_area_path
-    }
+    stop("A study area file not found!")
   }
 
   an_area %>%
@@ -163,23 +146,6 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     class= "SDM_area"
   ) %>%
     return()
-}
-
-
-.find_files <- function(an_area = NULL){
-  checkmate::check_string(an_area, min.chars = 5)
-  file_list <- here::here() %>%
-    fs::dir_ls(recurse = T, type = "file") %>%
-    stringr::str_subset(stringr::fixed(an_area, ignore_case = T))
-
-  if ((file_list %>% length() >= 1)){
-    file_list %>%
-      return()
-  }
-  else {
-    NULL %>%
-      return()
-  }
 }
 
 .repair_area <- function(an_area = NULL){

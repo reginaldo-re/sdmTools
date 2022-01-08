@@ -115,25 +115,13 @@ test_that("Creating a study area from a gridded SpatialPolygonsDataFrame file.",
   expect_s3_class(new_area, "SDM_area")
 })
 
-test_that("Creating a study area from SpatialPolygonsDataFrame path.", {
-  new_area <- "brasil" %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-})
-
-
 
 test_that("Trying to get resolution from a not gridded SDM_area.", {
   expect_null(NULL %>% .get_resolution())
 })
 
 test_that("Get file name.", {
-  file_name_tmp <- "brasil" %>%
+  file_name_tmp <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
     .guess_file_name()
 
