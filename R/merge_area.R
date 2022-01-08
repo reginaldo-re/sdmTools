@@ -52,7 +52,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
   )
   checkmate::assert(
-    checkmate::check_string(new_name, min.chars = 1),
+    checkmate::check_string(new_name),
     checkmate::check_logical(new_name, len = 1)
   )
 
@@ -210,7 +210,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
       an_area$name <- an_area$name %>%
         paste0("_", to_merge_area %>% fs::path_file())
     }
-  } else if (checkmate::test_string(new_name, min.chars = 1)){
+  } else if (checkmate::test_string(new_name)){
     an_area$name <- new_name
   }
 
