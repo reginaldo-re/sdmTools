@@ -46,21 +46,31 @@ areas_gt.default <- function(an_area = NULL, lower_bound = 0, new_name = F) {
 #' @export
 areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   checkmate::check_class(an_area$study_area, "SpatialPolygons")
+
+  checkmate::assert(
+    checkmate::check_string(new_name),
+    checkmate::check_logical(new_name, len = 1)
+  )
+
   an_area$study_area <- an_area$study_area %>%
-    .sp_areas_gt(lower_bound, new_name)
+    .sp_areas_gt(lower_bound)
+
+  if (checkmate::test_logical(new_name, min.len = 1)){
+    if (new_name) {
+      an_area$name <- an_area$name %>%
+        paste0("_drop")
+    }
+  } else if (checkmate::test_string(new_name)){
+    an_area$name <- new_name
+  }
 
   an_area %>%
     return()
 }
 
-.sp_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F) {
+.sp_areas_gt <- function(an_area = NULL, lower_bound = 0) {
   checkmate::check_class(an_area, "SpatialPolygons")
   checkmate::assert_numeric(lower_bound, len = 1, lower = 0.0)
-
-  checkmate::assert(
-    checkmate::check_string(new_name, min.chars = 1),
-    checkmate::check_logical(new_name, len = 1)
-  )
 
   an_area <- an_area %>%
     .repair_area()
@@ -74,11 +84,6 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   }
   else {
     remain_areas_agg <- an_area_agg[raster::area(an_area_agg) > lower_bound, ]
-  }
-
-  if (checkmate::test_string(new_name, min.chars = 1)){
-    an_area$name <- an_area$name %>%
-      paste0("_", new_name)
   }
 
   if (remain_areas_agg@polygons %>% length() > 0){
