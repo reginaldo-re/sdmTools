@@ -1,0 +1,23 @@
+create_enum <- function(...) {
+  allowed_values <- match.call(expand.dots = TRUE)[-1L] %>%
+    sapply(deparse)
+
+  stopifnot(identical(unique(allowed_values), allowed_values))
+
+  allowed_values  <- allowed_values %>%
+    make.names(unique = TRUE)
+
+  new_enum <- allowed_values %>%
+    setNames(allowed_values) %>%
+    as.list()
+
+  class(new_enum) <- "enumeration" %>%
+    append(class(new_enum))
+
+  new_enum %>%
+    return()
+}
+
+as_vector<- function(a_enum){
+  a_enum %>% unlist(use.names = F)
+}

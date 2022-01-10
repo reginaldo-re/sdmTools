@@ -8,6 +8,7 @@
 #' @importFrom methods is
 #' @importFrom methods slot
 #' @importFrom magrittr %>%
+#' @importFrom stats setNames
 "_PACKAGE"
 
 ## usethis namespace: start
