@@ -15,8 +15,12 @@ utils::globalVariables(c("where",":="))
 #' @param a_res A vector containing the resolution of the study area. The format is two numeric values
 #' (width and height) according to epsg_code used. So, the numeric values can express different types of measurement units,
 #' for example deegres or meters.
-#' @return An object representing a study area containing a sp object. Occasional topological errors on polygons of the
-#' object are corrected. If the epsg_code of the study area is different from the epsg_code passed to the function, the study
+#' @return An object representing a study area containing a sp object.
+#'
+#' Occasional topological errors on polygons of the object are corrected. As a side effect holes inside
+#' polygons are removed.
+#'
+#' If the epsg_code of the study area is different from the epsg_code passed to the function, the study
 #' area is reproject.
 #' @export
 #' @examples
