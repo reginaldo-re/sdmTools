@@ -34,7 +34,29 @@ P <- Polygons(
   )
 )
 
-SP = SpatialPolygons(list(P))
+SP <- SpatialPolygons(
+    list(
+      Polygons(
+        ID = 1,
+        list(
+          Polygon(main),
+          Polygon(hole, hole = TRUE)
+        )
+      ),
+      Polygons(
+        ID = 2,
+        list(
+          Polygon(island)
+        )
+      ),
+      Polygons(
+        ID = 3,
+        list(
+          Polygon(secondary)
+        )
+      )
+  )
+)
 crs(SP) <- CRS("EPSG:6933")
 
 SPDF <- rgdal::readOGR(system.file("vect_files/brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = F)
