@@ -18,8 +18,12 @@ sdm_area(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL)
 for example deegres or meters.}
 }
 \value{
-An object representing a study area containing a sp object. Occasional topological errors on polygons of the
-object are corrected. If the epsg_code of the study area is different from the epsg_code passed to the function, the study
+An object representing a study area containing a sp object.
+
+Occasional topological errors on polygons of the object are corrected. As a side effect holes inside
+polygons are removed.
+
+If the epsg_code of the study area is different from the epsg_code passed to the function, the study
 area is reproject.
 }
 \description{

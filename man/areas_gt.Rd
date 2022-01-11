@@ -21,34 +21,23 @@ Drop non-contiguous polygons with area smaller or equal lower_bound.
 }
 \examples{
 \dontrun{
-main <- cbind(
-  c(0, 0, 1, 1),
-  c(0, 1, 1, 0)
-)
-secondary <- cbind(
-  c(1, 1.3, 1.3, 1),
-  c(1, 1.0, 0.7, 0.7)
-)
-hole <- main / 3 + 1 / 3
-island <- cbind(
-  c(1.05, 1.05, 1.55, 1.55),
-  c(0, .5, .5, 0)
-)
-P <- Polygons(
-  ID = 1,
-  list(
-    Polygon(main),
-    Polygon(hole, hole = TRUE),
-    Polygon(island),
-    Polygon(secondary)
-  )
-)
+new_SPDF <- SP \%>\%
+ as("SpatialPolygonsDataFrame")
+new_SPDF@data <- list(
+ area=c(
+   SP[1] \%>\% gArea(),
+   SP[2] \%>\% gArea(),
+   SP[3] \%>\% gArea()
+ )
+) \%>\%
+ as.data.frame()
 
-SP <- SpatialPolygons(list(P))
-plot(SP)
+plot(new_SPDF)
 
-new_sdm_area <- sdm_area(SP, "Some study area.", "EPSG:6933", c(0.1, 0.1))
+new_area <- new_SPDF \%>\%
+ sdm_area("Removing a single area from a SpatialPolygons study area.", "EPSG:6933", c(50000, 50000)) \%>\%
+ areas_gt(0.25, new_name = "Removing a single area from a SpatialPolygons study area.")
 
-plot(new_sdm_area$study_area)
+plot(new_area$study_area)
 }
 }
