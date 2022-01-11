@@ -2,53 +2,50 @@
 % Please edit documentation in R/make_grid.R
 \name{make_grid}
 \alias{make_grid}
-\title{Make a grid over study area.}
+\title{Make a grid over a study area.}
 \usage{
 make_grid(an_area = NULL, var_names = NULL, new_name = F, centroid = T)
 }
 \arguments{
-\item{an_area}{A SDM_area object representing the area of study.}
+\item{an_area}{A SDM_area object representing the area of the study.}
 
-\item{var_names}{A list of variable names to keep on cells. Variables area computed using
-the average of features (polygons or lines) that over each cell. It try to match each variable name
-(ignoring case) in the study area.}
+\item{var_names}{A list of variable names to keep on cells. It try to match each variable name
+(ignoring case and partially matched) in the study area. Variables are calculated using
+the average of features (polygons or lines) coverage by each cell.}
 
-\item{centroid}{A boolean indicating if x_centroid and y_centroid variables must be computed and appended
-to variables./}
+\item{new_name}{A name to new area study after make a grid over area.}
+
+\item{centroid}{A boolean indicating if x_centroid and y_centroid variables must be computed and appended}
 }
 \value{
-A SDM_area  object with cells covering the study area. The dataframe contains the variables
+A SDM_area object with cells covering the study area. The dataframe contains the variables
 matched and computed acoording to each cell.
 }
 \description{
-Make a grid over study area.
+Make a grid over a study area.
 }
 \examples{
 \dontrun{
-SPDF <- readOGR(
-   system.file("brasil_uf.gpkg", package="sdmTools"),
+SPDF <- rgdal::readOGR(
+   system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
    layer = "brasil_uf",
-   verbose = FALSE
- )
-SLDF <- readOGR(
-   system.file("hydro_uper_prpy.gpkg", package="sdmTools"),
+   verbose = F
+)
+SLDF <- rgdal::readOGR(
+   system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools"),
    layer = "hydro_uper_prpy",
-   verbose = FALSE
- )
-new_sdm_area <- sdm_area(SPDF, "EPSG:6933", c(50000, 50000)))
-gridded_area <- make_grid(
-      new_sdm_area,
-      var_names = c("Length", "xxx", "Main_ri"),
-      centroid = T
- )
-gridded_area \%>\% plot()
+   verbose = F
 
-new_sdm_area <- sdm_area(SLDF, "EPSG:6933", c(50000, 50000)))
-gridded_area <- make_grid(
-      new_sdm_area,
-      var_names = c("Length", "xxx", "Main_ri"),
-      centroid = T
- )
-gridded_area \%>\% plot()
+gridded_area <- SPDF \%>\%
+ sdm_area("Test area", "EPSG:6933", c(50000, 50000)) \%>\%
+ make_grid(var_names = list(), new_name = T)
+
+plot(gridded_area)
+
+gridded_area <- SLDF \%>\%
+  sdm_area("Test area", "EPSG:6933", c(10000, 10000)) \%>\%
+  make_grid(var_names = list("Length", "xxx", "Main_ri"))
+
+plot(gridded_area)
 }
 }

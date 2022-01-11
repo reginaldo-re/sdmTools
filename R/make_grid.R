@@ -1,54 +1,51 @@
-#' Make a grid over study area.
+#' Make a grid over a study area.
 #'
-#' @param an_area A SDM_area object representing the area of study.
-#' @param var_names A list of variable names to keep on cells. Variables area computed using
-#' the average of features (polygons or lines) that over each cell. It try to match each variable name
-#' (ignoring case) in the study area.
+#' @param an_area A SDM_area object representing the area of the study.
+#' @param var_names A list of variable names to keep on cells. It try to match each variable name
+#' (ignoring case and partially matched) in the study area. Variables are calculated using
+#' the average of features (polygons or lines) coverage by each cell.
 #' @param centroid A boolean indicating if x_centroid and y_centroid variables must be computed and appended
-#' to variables./
-#' @return A SDM_area  object with cells covering the study area. The dataframe contains the variables
-#'  matched and computed acoording to each cell.
+#' @param new_name A name to new area study after make a grid over area.
+#' @return A SDM_area object with cells covering the study area. The dataframe contains the variables
+#' matched and computed acoording to each cell.
 #' @export
 #' @examples
 #' \dontrun{
-#' SPDF <- readOGR(
-#'    system.file("brasil_uf.gpkg", package="sdmTools"),
+#' SPDF <- rgdal::readOGR(
+#'    system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
 #'    layer = "brasil_uf",
-#'    verbose = FALSE
-#'  )
-#' SLDF <- readOGR(
-#'    system.file("hydro_uper_prpy.gpkg", package="sdmTools"),
+#'    verbose = F
+#' )
+#' SLDF <- rgdal::readOGR(
+#'    system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools"),
 #'    layer = "hydro_uper_prpy",
-#'    verbose = FALSE
-#'  )
-#' new_sdm_area <- sdm_area(SPDF, "EPSG:6933", c(50000, 50000)))
-#' gridded_area <- make_grid(
-#'       new_sdm_area,
-#'       var_names = c("Length", "xxx", "Main_ri"),
-#'       centroid = T
-#'  )
-#' gridded_area %>% plot()
+#'    verbose = F
+#  )
 #'
-#' new_sdm_area <- sdm_area(SLDF, "EPSG:6933", c(50000, 50000)))
-#' gridded_area <- make_grid(
-#'       new_sdm_area,
-#'       var_names = c("Length", "xxx", "Main_ri"),
-#'       centroid = T
-#'  )
-#' gridded_area %>% plot()
+#' gridded_area <- SPDF %>%
+#'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
+#'  make_grid(var_names = list(), new_name = T)
+#'
+#' plot(gridded_area)
+#'
+#' gridded_area <- SLDF %>%
+#'   sdm_area("Test area", "EPSG:6933", c(10000, 10000)) %>%
+#'   make_grid(var_names = list("Length", "xxx", "Main_ri"))
+#'
+#' plot(gridded_area)
 #' }
-make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, centroid=T){
+make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
   UseMethod("make_grid", an_area)
 }
 
 #' @export
-make_grid.default <- function(an_area = NULL, var_names = NULL, new_name = F, centroid=T){
+make_grid.default <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
   warning("Nothing to do, an_area must be an SDM_area object.")
   return(an_area)
 }
 
 #' @export
-make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, centroid=T){
+make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, centroid = T){
   checkmate::assert(
     checkmate::check_class(an_area$study_area, "SpatialPolygons"),
     checkmate::check_class(an_area$study_area, "SpatialLines")
@@ -111,7 +108,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     return()
 }
 
-.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid = T){
   grid_cell_id <- value <- x <- y <- NULL
 
   a_sdm_area <- an_area
