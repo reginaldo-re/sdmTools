@@ -7,7 +7,7 @@
 make_grid(an_area = NULL, var_names = NULL, new_name = F, centroid = T)
 }
 \arguments{
-\item{an_area}{A SDM_area object representing the area of the study.}
+\item{an_area}{A \code{SDM_area} object representing the area of the study.}
 
 \item{var_names}{A list of variable names to keep on cells. It try to match each variable name
 (ignoring case and partially matched) in the study area. Variables are calculated using
@@ -18,7 +18,7 @@ the average of features (polygons or lines) coverage by each cell.}
 \item{centroid}{A boolean indicating if x_centroid and y_centroid variables must be computed and appended}
 }
 \value{
-A SDM_area object with cells covering the study area. The dataframe contains the variables
+A \code{SDM_area} object with cells covering the study area. The dataframe contains the variables
 matched and computed acoording to each cell.
 }
 \description{

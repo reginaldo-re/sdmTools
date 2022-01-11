@@ -1,20 +1,38 @@
 #' Merge rasters over a gridded study area.
 #'
-#' @param an_area A SDM_area object with cells covering the study area.
-#' @param area_source A path to a folder or a Raster* object with variables to merge with.
-#' @param var_names A list of variable names to keep on cells. Variables area computed using
-#' the average of raster points that over each cell. It try to match each variable name
-#' (ignoring case) in the study area.
-#'
-#' @return A SDM_area_gridded object containing variables merged with. If the CRS of the Raster* is
-#' different from the CRS of the SDM_area object, it is reproject. The merging process
-#' produces cells intersecting SDM_area object and Raster*.
+#' @param an_area A \code{SDM_area} object with cells covering the study area.
+#' @param var_names A list of variable names to keep on cells. It try to match each variable name
+#' (ignoring case and partially matched) in the study area. Variables are calculated using
+#' @param to_merge_area A path to a Raster* (\url{https://cran.r-project.org/web/packages/raster/})
+#' object (folder or file) with variables to merge with.
+#' @param new_name A name to new area study after merge rasters over area.
+#' the average of features (polygons or lines) coverage by each cell.
+#' @return A \code{SDM_area} object containing variables merged with. If the CRS of the Raster* is
+#' different from the CRS of the \code{SDM_area} object, it is reproject. The merging process
+#' produces cells intersecting \code{SDM_area} object and Raster*.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' aaa
+#' SPDF <- rgdal::readOGR(
+#'    system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
+#'    layer = "brasil_uf",
+#'    verbose = F
+#' )
+#'
+#' gridded_area <- SPDF %>%
+#'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
+#'  make_grid(var_names = list(), new_name = T)
+#'
+#' gridded_area <- gridded_area %>%
+#'    merge_area(
+#'       system.file("rast_files", package="sdmTools"),
+#'       var_names = list("bio_5m_01", "bio_5m_02")
+#'    )
+#'
+#' gridded_area$study_area@data %>% head()
 #' }
+#'
 merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
   UseMethod("merge_area", an_area)
 }

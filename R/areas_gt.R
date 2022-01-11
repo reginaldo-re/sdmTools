@@ -1,10 +1,12 @@
 #' Drop non-contiguous polygons with area smaller or equal lower_bound.
 #'
-#' @param an_area A SDM_area object representing the area of study.
+#' @param an_area A \code{SDM_area} object representing the area of study.
 #' @param new_name A name to new area study after dropping smaller polygons.
 #' @param lower_bound A lower bound area indicating polygons which it going to dropped out.
 #'
-#' @return A SDM_area containing a sp object with remaining disaggregated polygons with area greater than lower_bound.
+#' @return A \code{SDM_area} containing an object of package
+#' \code{sp} (<https://cran.r-project.org/web/packages/sp>)
+#' with remaining disaggregated polygons with area greater than lower_bound.
 #' @export
 #' @examples
 #' \dontrun{
@@ -23,8 +25,15 @@
 #' plot(new_SPDF)
 #'
 #' new_area <- new_SPDF %>%
-#'  sdm_area("Removing a single area from a SpatialPolygons study area.", "EPSG:6933", c(50000, 50000)) %>%
-#'  areas_gt(0.25, new_name = "Removing a single area from a SpatialPolygons study area.")
+#'  sdm_area(
+#'     "Removing a single area from a SpatialPolygons study area.",
+#'     "EPSG:6933",
+#'     c(50000, 50000)
+#'  ) %>%
+#'  areas_gt(
+#'     0.25,
+#'     new_name = "Removing a single area from a SpatialPolygons study area."
+#'  )
 #'
 #' plot(new_area$study_area)
 #' }

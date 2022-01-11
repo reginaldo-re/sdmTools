@@ -1,4 +1,36 @@
+#' Save the vector format geospatial object of the \code{SDM_area} to a geopackage file.
+#'
+#' @param an_area A \code{SDM_area} object representing the area of the study.
+#'
+#' @param file_name The name of file which the sp object will be saved. It
+#' can ben composed by the file name and the file path. If the file path doesn't exists
+#' it will be created. If the file name parameter is equal to NULL, it is replaced by
+#' a name computed based on attributes of the sdm_area object.
+#' @param file_path The path in which the file will be saved. If file_name contains
+#' file path, the file_path parameter is ignored.
+#'
 #' @export
+#' @examples
+#' \dontrun{
+#' SPDF <- rgdal::readOGR(
+#'    system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
+#'    layer = "brasil_uf",
+#'    verbose = F
+#' )
+#'
+#' gridded_area <- SPDF %>%
+#'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
+#'  make_grid(var_names = list(), new_name = T)
+#'
+#' tmp_dir <- tempdir()
+#'
+#' gridded_area %>%
+#'    save_gpkg(file_path = tmp_dir)
+#'
+#' tmp_dir %>%
+#'    paste0("/test_area_grid_50000_epsg_6933.gpkg") %>%
+#'    fs::file_info()
+#' }
 save_gpkg <- function(an_area, file_name, file_path){
   UseMethod("save_gpkg", an_area)
 }

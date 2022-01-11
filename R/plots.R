@@ -13,13 +13,10 @@ plot.SDM_area <- function(x, ...){
   x$study_area %>% plot(...)
 }
 
-
-
 #' @export
 area_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
   UseMethod("area_geomap", an_area)
 }
-
 
 #' @export
 area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){

@@ -2,25 +2,26 @@ utils::globalVariables(c("where",":="))
 
 #' Creates a Study Area
 #'
-#' A study area is a geographic location delimited by primitive shapes (lines and polygons)  and
+#' A study area (\code{SDm_area}) represents a geographic location delimited by primitive shapes (lines and polygons)  and
 #' associated attribute information about characteristics of that location.
 #'
-#' The attribute information of the study area are constant in time. In contrast, the SDM_area object
+#' The attribute information of the study area are constant in time. In contrast, the \code{SDM_area} object
 #' has an array attribute storing multiple scenarios, representing attribute information about characteristics of the
 #' location that change in time.
 #'
-#' @param an_area A sp object or a path to a file, commonly a shapefile or geopackage, representing the area of study.
+#' @param an_area An object of package \code{sp} (<https://cran.r-project.org/web/packages/sp>)
+#' or a path to a file, commonly a shapefile or geopackage, representing the area of study.
 #' @param name A name do describe the study area.
-#' @param epsg_code A valid EPSG  code, for example EPSG:4326.
+#' @param epsg_code A valid EPSG code, for example EPSG:4326.
 #' @param a_res A vector containing the resolution of the study area. The format is two numeric values
-#' (width and height) according to epsg_code used. So, the numeric values can express different types of measurement units,
-#' for example deegres or meters.
-#' @return An object representing a study area containing a sp object.
+#' (width and height) according to \code{epsg_code} used. So, the numeric values can express different
+#' types of measurement units, for example deegres or meters.
+#' @return An object representing a study area containing a \code{sp} object.
 #'
 #' Occasional topological errors on polygons of the object are corrected. As a side effect holes inside
 #' polygons are removed.
 #'
-#' If the epsg_code of the study area is different from the epsg_code passed to the function, the study
+#' If the \code{epsg_code} of the study area is different from the epsg_code passed to the function, the study
 #' area is reproject.
 #' @export
 #' @examples
