@@ -2,12 +2,19 @@ utils::globalVariables(c("where",":="))
 
 #' Creates a Study Area
 #'
+#' A study area is a geographic location delimited by primitive shapes (lines and polygons)  and
+#' associated attribute information about characteristics of that location.
+#'
+#' The attribute information of the study area are constant in time. In contrast, the SDM_area object
+#' has an array attribute storing multiple scenarios, representing attribute information about characteristics of the
+#' location that change in time.
+#'
 #' @param an_area A sp object or a path to a file, commonly a shapefile or geopackage, representing the area of study.
 #' @param name A name do describe the study area.
-#' @param epsg_code A valid epsg_code code, for example EPSG:4326.
+#' @param epsg_code A valid EPSG  code, for example EPSG:4326.
 #' @param a_res A vector containing the resolution of the study area. The format is two numeric values
-#' (width and height) according to epsg_code used. So, the numeric values can be express different types of units of
-#' measurement, for example deegres or meters.
+#' (width and height) according to epsg_code used. So, the numeric values can express different types of measurement units,
+#' for example deegres or meters.
 #' @return An object representing a study area containing a sp object. Occasional topological errors on polygons of the
 #' object are corrected. If the epsg_code of the study area is different from the epsg_code passed to the function, the study
 #' area is reproject.
@@ -22,6 +29,8 @@ utils::globalVariables(c("where",":="))
 #' new_sdm_area <- sdm_area(SPDF, "Brasil", "EPSG:6933", c(50000, 50000)))
 #'
 #' class(new_sdm_area)
+#'
+#' plot(new_sdm_area)
 #' }
 #'
 sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){

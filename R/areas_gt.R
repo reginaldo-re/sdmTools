@@ -1,7 +1,9 @@
-#' Drop noncontiguous polygons with an area smaller or equal lower_bound.
+#' Drop non-contiguous polygons with area smaller or equal lower_bound.
 #'
 #' @param an_area A SDM_area object representing the area of study.
+#' @param new_name A name to new area study after dropping smaller polygons.
 #' @param lower_bound A lower bound area indicating polygons which it going to dropped out.
+#'
 #' @return A SDM_area containing a sp object with remaining disaggregated polygons with area greater than lower_bound.
 #' @export
 #' @examples
@@ -30,8 +32,11 @@
 #' )
 #'
 #' SP <- SpatialPolygons(list(P))
-#' new_sdm_area <- sdm_area(SP, "EPSG:6933", c(0.1, 0.1)))
-#' plot(new_sdm_area)
+#' plot(SP)
+#'
+#' new_sdm_area <- sdm_area(SP, "Some study area.", "EPSG:6933", c(0.1, 0.1))
+#'
+#' plot(new_sdm_area$study_area)
 #' }
 areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F){
   UseMethod("areas_gt")

@@ -11,11 +11,11 @@ sdm_area(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL)
 
 \item{name}{A name do describe the study area.}
 
-\item{epsg_code}{A valid epsg_code code, for example EPSG:4326.}
+\item{epsg_code}{A valid EPSG  code, for example EPSG:4326.}
 
 \item{a_res}{A vector containing the resolution of the study area. The format is two numeric values
-(width and height) according to epsg_code used. So, the numeric values can be express different types of units of
-measurement, for example deegres or meters.}
+(width and height) according to epsg_code used. So, the numeric values can express different types of measurement units,
+for example deegres or meters.}
 }
 \value{
 An object representing a study area containing a sp object. Occasional topological errors on polygons of the
@@ -23,7 +23,13 @@ object are corrected. If the epsg_code of the study area is different from the e
 area is reproject.
 }
 \description{
-Creates a Study Area
+A study area is a geographic location delimited by primitive shapes (lines and polygons)  and
+associated attribute information about characteristics of that location.
+}
+\details{
+The attribute information of the study area are constant in time. In contrast, the SDM_area object
+has an array attribute storing multiple scenarios, representing attribute information about characteristics of the
+location that change in time.
 }
 \examples{
 \dontrun{
@@ -35,6 +41,8 @@ SPDF <- readOGR(
 new_sdm_area <- sdm_area(SPDF, "Brasil", "EPSG:6933", c(50000, 50000)))
 
 class(new_sdm_area)
+
+plot(new_sdm_area)
 }
 
 }
