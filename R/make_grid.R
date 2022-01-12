@@ -61,37 +61,13 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     checkmate::check_logical(new_name, len = 1)
   )
 
-  an_area$attr_control_name <- create_enum(dummy, cell_id, x_centroid, y_centroid)
-
   if (an_area$study_area %>% is("SpatialPolygons")){
     an_area$study_area <- an_area$study_area %>%
-      as("SpatialPolygonsDataFrame")
-
-    an_area$study_area@data <- an_area$study_area@data %>%
-      dplyr::select(-(an_area$attr_control_name %>% as_vector() %>% tidyselect::any_of())) %>%
-      tibble::rowid_to_column(an_area$attr_control_name$cell_id)
+      .make_grid_SpatialPolygons(an_area$resolution, var_names, new_name, centroid)
   } else if (an_area$study_area %>% is("SpatialLines")){
     an_area$study_area <- an_area$study_area %>%
-      as("SpatialLinesDataFrame")
-
-    an_area$study_area@data <- an_area$study_area@data %>%
-      select(-(an_area$attr_control_name %>% as_vector() %>% tidyselect::any_of()))
-
-    if (an_area$study_area@data %>% names() %>% length()==0){
-      an_area$study_area@data <- list(
-          dummy=1:(an_area$study_area@lines %>% length())
-        ) %>%
-        as.data.frame() %>%
-        setNames(c(an_area$attr_control_name$cell_id))
-
-    } else{
-      an_area$study_area@data <- an_area$study_area@data %>%
-        tibble::rowid_to_column(an_area$attr_control_name$cell_id)
-    }
+      .make_grid_SpatialLines(an_area$resolution, var_names, new_name, centroid)
   }
-
-  an_area$study_area <- an_area %>%
-    .sp_make_grid(an_area$resolution, var_names, new_name, centroid)
 
   an_area$gridded <- T
 
@@ -101,19 +77,55 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
         paste0("_grid")
     }
   } else if (checkmate::test_string(new_name)){
-      an_area$name <- new_name
+    an_area$name <- new_name
   }
 
   an_area %>%
     return()
 }
 
-.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid = T){
+.make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+  checkmate::check_class(an_area, "SpatialPolygons")
+
+  an_area <- an_area %>%
+    as("SpatialPolygonsDataFrame")
+
+  an_area@data <- an_area@data %>%
+    dplyr::select(-(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% tidyselect::any_of())) %>%
+    tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
+
+  an_area %>%
+    .sp_make_grid(a_res, var_names, centroid) %>%
+    return()
+}
+
+.make_grid_SpatialLines <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+  checkmate::check_class(an_area, "SpatialLines")
+
+  an_area <- an_area %>%
+    as("SpatialLinesDataFrame")
+
+  an_area@data <- an_area@data %>%
+    select(-(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% tidyselect::any_of()))
+
+  if (an_area@data %>% names() %>% length()==0){
+    an_area@data <- list(
+        dummy=1:(an_area@lines %>% length())
+      ) %>%
+      as.data.frame() %>%
+      setNames(c(ATTR_CONTROL_NAMES$cell_id))
+  } else{
+    an_area@data <- an_area@data %>%
+      tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
+  }
+
+  an_area %>%
+    .sp_make_grid(a_res, var_names, new_name, centroid) %>%
+    return()
+}
+
+.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
   grid_cell_id <- value <- x <- y <- NULL
-
-  a_sdm_area <- an_area
-  an_area <- an_area$study_area
-
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
     checkmate::check_class(an_area, "SpatialLines"),
@@ -184,14 +196,14 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
   shp_grid@data <- grid_cells %>%
     purrr::map_dfr(dplyr::as_tibble, .id="grid_cell_id") %>%
-    dplyr::rename(!!a_sdm_area$attr_control_name$cell_id := value) %>%
-    dplyr::left_join(shp_area_bkp@data, by = a_sdm_area$attr_control_name$cell_id) %>%
-    dplyr::select(-(!!a_sdm_area$attr_control_name$cell_id)) %>%
+    dplyr::rename(!!ATTR_CONTROL_NAMES$cell_id := value) %>%
+    dplyr::left_join(shp_area_bkp@data, by = ATTR_CONTROL_NAMES$cell_id) %>%
+    dplyr::select(-(!!ATTR_CONTROL_NAMES$cell_id)) %>%
     dplyr::group_by(grid_cell_id) %>%
     dplyr::summarise_all(~ ifelse(is.numeric(.), mean(.), .), na.rm = TRUE) %>%
     dplyr::ungroup() %>%
     dplyr::select(-grid_cell_id) %>%
-    tibble::rowid_to_column(a_sdm_area$attr_control_name$cell_id)
+    tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
 
   an_area <- shp_grid
 
@@ -201,7 +213,8 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
     an_area@data <- an_area@data %>%
       dplyr::bind_cols(centroids@coords %>% as.data.frame()) %>%
-      dplyr::rename(!!a_sdm_area$attr_control_name$x_centroid := x, !!a_sdm_area$attr_control_name$y_centroid := y)
+      dplyr::rename(!!ATTR_CONTROL_NAMES$x_centroid := x, !!ATTR_CONTROL_NAMES$y_centroid := y)
+
   }
   return(an_area)
 }
@@ -220,7 +233,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     )
 
   if (! var_names %>% is.null()){
-    var_names <- c("cell_id") %>%
+    var_names <- c(ATTR_CONTROL_NAMES$cell_id) %>%
       purrr::prepend(var_names)
 
     if (var_names %>% length() > 0){

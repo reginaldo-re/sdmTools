@@ -18,6 +18,9 @@ create_enum <- function(...) {
     return()
 }
 
-as_vector<- function(a_enum){
+enum_as_vector<- function(a_enum){
   a_enum %>% unlist(use.names = F)
 }
+
+
+ATTR_CONTROL_NAMES <- create_enum(dummy, cell_id, x_centroid, y_centroid)
