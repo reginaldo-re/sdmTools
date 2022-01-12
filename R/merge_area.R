@@ -180,7 +180,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
     shp_area_file,
     tempfile() %>% paste0(".tif"),
     #burn = 0,
-    a = an_area$attr_control_name$cell_id,
+    a = ATTR_CONTROL_NAMES$cell_id,
     #at = T,
     co = c("BIGTIFF=YES"),
     a_nodata = "-9999.0",
@@ -209,7 +209,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
 
   shp_grid <- an_area$study_area[grid_cells %>% as.integer(),]
 
-  shp_grid@data[an_area$attr_control_name$cell_id] <- 1:length(grid_cells)
+  shp_grid@data[ATTR_CONTROL_NAMES$cell_id] <- 1:length(grid_cells)
   shp_grid %>%
     sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
