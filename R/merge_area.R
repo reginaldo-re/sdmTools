@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' SPDF <- rgdal::readOGR(
+#' SPDF <- readOGR(
 #'    system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
 #'    layer = "brasil_uf",
 #'    verbose = F

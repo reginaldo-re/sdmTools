@@ -31,7 +31,8 @@ utils::globalVariables(c("where",":="))
 #'    layer = "brasil_uf",
 #'    verbose = FALSE
 #' )
-#' new_sdm_area <- sdm_area(SPDF, "Brasil", "EPSG:6933", c(50000, 50000)))
+#' new_sdm_area <- SPDF %>%
+#'    sdm_area("Brasil", "EPSG:6933", c(50000, 50000)))
 #'
 #' class(new_sdm_area)
 #'
