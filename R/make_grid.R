@@ -11,12 +11,12 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' SPDF <- rgdal::readOGR(
+#' SPDF <- readOGR(
 #'    system.file("vect_files/brasil_uf.gpkg", package="sdmTools"),
 #'    layer = "brasil_uf",
 #'    verbose = F
 #' )
-#' SLDF <- rgdal::readOGR(
+#' SLDF <- readOGR(
 #'    system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools"),
 #'    layer = "hydro_uper_prpy",
 #'    verbose = F
