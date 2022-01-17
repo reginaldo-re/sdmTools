@@ -9,10 +9,10 @@ save_gpkg(an_area, file_name, file_path)
 \arguments{
 \item{an_area}{A \code{SDM_area} object representing the area of the study.}
 
-\item{file_name}{The name of file which the sp object will be saved. It
+\item{file_name}{The name of file which the \code{sp} object will be saved. It
 can ben composed by the file name and the file path. If the file path doesn't exists
 it will be created. If the file name parameter is equal to NULL, it is replaced by
-a name computed based on attributes of the sdm_area object.}
+a name computed based on attributes of the \code{SDM_area} object.}
 
 \item{file_path}{The path in which the file will be saved. If file_name contains
 file path, the file_path parameter is ignored.}

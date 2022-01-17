@@ -3,13 +3,13 @@
 #' @param an_area A \code{SDM_area} object with cells covering the study area.
 #' @param var_names A list of variable names to keep on cells. It try to match each variable name
 #' (ignoring case and partially matched) in the study area. Variables are calculated using
-#' @param to_merge_area A path to a Raster* (\url{https://cran.r-project.org/web/packages/raster/})
+#' @param to_merge_area A path to a \code{Raster*} (\url{https://cran.r-project.org/web/packages/raster/})
 #' object (folder or file) with variables to merge with.
 #' @param new_name A name to new area study after merge rasters over area.
 #' the average of features (polygons or lines) coverage by each cell.
-#' @return A \code{SDM_area} object containing variables merged with. If the CRS of the Raster* is
+#' @return A \code{SDM_area} object containing variables merged with. If the CRS of the \code{Raster*} is
 #' different from the CRS of the \code{SDM_area} object, it is reproject. The merging process
-#' produces cells intersecting \code{SDM_area} object and Raster*.
+#' produces cells intersecting \code{SDM_area} object and \code{Raster*}.
 #' @export
 #'
 #' @examples

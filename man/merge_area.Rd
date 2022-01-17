@@ -14,7 +14,7 @@ merge_area(
 \arguments{
 \item{an_area}{A \code{SDM_area} object with cells covering the study area.}
 
-\item{to_merge_area}{A path to a Raster* (\url{https://cran.r-project.org/web/packages/raster/})
+\item{to_merge_area}{A path to a \code{Raster*} (\url{https://cran.r-project.org/web/packages/raster/})
 object (folder or file) with variables to merge with.}
 
 \item{var_names}{A list of variable names to keep on cells. It try to match each variable name
@@ -24,9 +24,9 @@ object (folder or file) with variables to merge with.}
 the average of features (polygons or lines) coverage by each cell.}
 }
 \value{
-A \code{SDM_area} object containing variables merged with. If the CRS of the Raster* is
+A \code{SDM_area} object containing variables merged with. If the CRS of the \code{Raster*} is
 different from the CRS of the \code{SDM_area} object, it is reproject. The merging process
-produces cells intersecting \code{SDM_area} object and Raster*.
+produces cells intersecting \code{SDM_area} object and \code{Raster*}.
 }
 \description{
 Merge rasters over a gridded study area.
