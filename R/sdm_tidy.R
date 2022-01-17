@@ -53,9 +53,9 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
       df_tmp <- df_tmp %>%
-        mutate({{region}} := as.integer(id)) %>%
-        select(-id) %>%
-        left_join(an_area@data, by=region)
+        dplyr::mutate({{region}} := as.integer(id)) %>%
+        tidyselect::select(-id) %>%
+        dplyr::left_join(an_area@data, by=region)
       return(df_tmp)
     }
   }
