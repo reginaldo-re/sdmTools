@@ -2,10 +2,10 @@
 #'
 #' @param an_area A \code{SDM_area} object representing the area of the study.
 #'
-#' @param file_name The name of file which the sp object will be saved. It
+#' @param file_name The name of file which the \code{sp} object will be saved. It
 #' can ben composed by the file name and the file path. If the file path doesn't exists
 #' it will be created. If the file name parameter is equal to NULL, it is replaced by
-#' a name computed based on attributes of the sdm_area object.
+#' a name computed based on attributes of the \code{SDM_area} object.
 #' @param file_path The path in which the file will be saved. If file_name contains
 #' file path, the file_path parameter is ignored.
 #'
@@ -50,7 +50,7 @@ save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL
 }
 
 .sp_save_gpkg <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  checkmate::check_class(an_area, "Spatial")
+  checkmate::assert_class(an_area, "Spatial")
   checkmate::assert_string(file_name)
 
   if (file_name %>% fs::path_dir() != "."){
