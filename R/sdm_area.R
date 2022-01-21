@@ -105,7 +105,14 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  area_crs <- suppressWarnings(try(raster::crs(an_area)))
+
+  withr::with_message_sink(
+    tempfile(),
+    {
+      area_crs <- try(an_area %>% raster::crs())
+    }
+  )
+
   if(class(area_crs) == "try-error" || area_crs %>% is.na()){
     raster::crs(an_area) <- raster::crs("EPSG:4326")
   }
@@ -122,9 +129,14 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     new_crs <- an_area %>%
       raster::crs()
   } else {
-    new_crs <- suppressWarnings(
-      try(raster::crs(epsg_code))
+    withr::with_message_sink(
+      tempfile(),
+      {
+        new_crs <- try(epsg_code %>% raster::crs())
+      }
     )
+
+
     checkmate::assert(
       checkmate::check_class(new_crs, "try-error"),
       checkmate::check_class(new_crs, "CRS"),
@@ -173,17 +185,29 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 }
 
 .repair_area.SpatialPolygons <- function(an_area = NULL){
-  res_crs <- suppressWarnings(
-    try(raster::crs(an_area))
+  withr::with_message_sink(
+    tempfile(),
+    {
+      res_crs <- try(an_area %>% raster::crs())
+    }
   )
+
+
   if (res_crs %>% is("try-error") || res_crs %>% is.na()){
     stop("Invalid CRS.")
   }
-  suppressWarnings(
-    an_area %>%
-      rgeos::gBuffer(byid=TRUE, width=0) %>%
-      return()
+
+  withr::with_message_sink(
+    tempfile(),
+    {
+      an_area <- try(an_area %>%
+          rgeos::gBuffer(byid=TRUE, width=0)
+      )
+    }
   )
+
+  an_area %>%
+    return()
 }
 
 .guess_file_name <- function(an_area = NULL){

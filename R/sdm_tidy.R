@@ -46,10 +46,14 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
 }
 
 .sdm_tidy <- function(an_area, region = NULL) {
-  suppressMessages(
-    df_tmp <- an_area %>%
-      broom::tidy()
+  withr::with_message_sink(
+    tempfile(),
+    {
+      df_tmp <- an_area %>%
+        broom::tidy()
+    }
   )
+
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
       df_tmp <- df_tmp %>%

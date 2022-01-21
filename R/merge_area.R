@@ -100,9 +100,13 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
   raster_stack <- raster_list %>%
     raster::stack()
 
-  result_crs <- suppressWarnings(
-    try(raster::crs(raster_stack))
+  withr::with_message_sink(
+    tempfile(),
+    {
+      result_crs <- try(raster_stack %>% raster::crs(), silent = T)
+    }
   )
+
   if (result_crs %>% class() == "try-error" || result_crs %>% is.na()){
     raster::crs(raster_stack) <- raster::crs("EPSG:4326")
   }
@@ -213,14 +217,18 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
   shp_grid %>%
     sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
-  suppressMessages(
-    shp_grid@data <- shp_grid@data %>% bind_cols(
-      raster_reescaled_countour_masked %>%
-        raster::as.list() %>%
-        purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
-        dplyr::rename_all(~ (var_names %>% unlist()))
-    )
+  withr::with_message_sink(
+    tempfile(),
+    {
+      shp_grid@data <- shp_grid@data %>% bind_cols(
+        raster_reescaled_countour_masked %>%
+          raster::as.list() %>%
+          purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
+          dplyr::rename_all(~ (var_names %>% unlist()))
+      )
+    }
   )
+
   an_area$study_area <- shp_grid
 
   if (checkmate::test_logical(new_name, len = 1)){
