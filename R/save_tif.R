@@ -45,7 +45,7 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
 
   tmp_raster <- raster::raster(
     crs  = an_area$study_area %>% raster::crs(),
-    ext = an_area$study_area %>% extent(),
+    ext = an_area$study_area %>% raster::extent(),
     res = an_area$resolution
   )
 
@@ -66,7 +66,7 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
       fs::dir_create(recurse = T)
 
     tmp_raster %>%
-      writeRaster(
+      raster::writeRaster(
         filename = file_path %>% fs::path(file_name) %>% paste0("_", names(an_area$study_area)),
         overwrite = T,
         bylayer = T,
