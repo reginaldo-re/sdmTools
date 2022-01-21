@@ -4,16 +4,18 @@ test_that("Trying to merge a non SDM_area object.", {
 
 test_that("Merge raster over SDM_area with all unnamed raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
-    merge_area(system.file("rast_files", package="sdmTools"))
+    merge_area(new_name = T, system.file("rast_files", package="sdmTools"))
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)
 })
 
+
+
 test_that("Merge raster over non gridded SDM_area with all unnamed raster variables.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    merge_area(system.file("rast_files", package="sdmTools"))
+    merge_area(new_name = "Test", system.file("rast_files", package="sdmTools"))
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_02 %>% mean() %>% round(2), 11.08)

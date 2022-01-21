@@ -39,7 +39,7 @@ test_that("Removing no areas from a SpatialPolygons study area.", {
 
   new_area <- new_SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    areas_gt(0.1)
+    areas_gt(0.1, new_name = T)
 
   expect_equal(new_area$study_area$area %>% sum() %>% round(2), 1.23)
   expect_equal(new_area$study_area %>% gArea() %>% round(2), 1.34)
