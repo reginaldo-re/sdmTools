@@ -9,13 +9,12 @@ save_tif(an_area, file_name, file_path)
 \arguments{
 \item{an_area}{A \code{SDM_area} object representing the area of the study.}
 
-\item{file_name}{The name of file which the \code{sp} object will be saved. It
-can not  composed by the file name and the file path, if the file path exists
-it will be removed. If the file name parameter is equal to NULL, it is replaced by
-a name computed based on attributes of the sdm_area object.}
+\item{file_name}{The name of file which the \code{sp} object will be saved.
+The \code{file_name} will be prepended to each attribute name of the \code{sp} object.
+If the \code{file_name} parameter is equal to NULL, it is replaced by
+a name computed based on attributes of the \code{SDM_area} object.}
 
-\item{file_path}{The path in which the file will be saved. If file_name contains
-file path, the file_path parameter is ignored.}
+\item{file_path}{The path in which the file will be saved.}
 }
 \description{
 Save the vector format geospatial object of the \code{SDM_area} to a raster tif file.
@@ -36,9 +35,5 @@ tmp_dir <- tempdir()
 
 gridded_area \%>\%
    save_tif(file_path = tmp_dir)
-
-tmp_dir \%>\%
-   paste0("/test_area_grid_50000_epsg_6933.gpkg") \%>\%
-   fs::file_info()
 }
 }
