@@ -51,14 +51,14 @@ sdm_scenario.character <- function(a_scenario = NULL){
   }
 
   if (file_list %>% length() > 0){
-    withr::with_message_sink(
-      tempfile(),
-      {
-        tmp_raster <- try(file_list %>% raster::stack(), silent = T)
-      }
-    )
-
-    checkmate::assert_class(tmp_raster, "RasterStack")
+    checkmate::assert_true(
+      all(
+        file_list %>%
+          fs::path_ext() %>%
+          magrittr::is_in(RASTER_FORMATS_EXT %>% enum_as_vector())
+        ),
+      .var.name = "Is Raster?"
+      )
     file_list %>%
       as.list() %>%
       return()
