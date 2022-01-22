@@ -18,7 +18,8 @@ merge_area(
 object (folder or file) with variables to merge with.}
 
 \item{var_names}{A list of variable names to keep on cells. It try to match each variable name
-(ignoring case and partially matched) in the study area. Variables are calculated using}
+(ignoring case and partially matched) in the study area. Variables are calculated using
+the average of features (polygons or lines) coverage by each cell.}
 
 \item{new_name}{A name to new area study after merge rasters over area.
 the average of features (polygons or lines) coverage by each cell.}

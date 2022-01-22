@@ -3,6 +3,7 @@
 #' @param an_area A \code{SDM_area} object with cells covering the study area.
 #' @param var_names A list of variable names to keep on cells. It try to match each variable name
 #' (ignoring case and partially matched) in the study area. Variables are calculated using
+#' the average of features (polygons or lines) coverage by each cell.
 #' @param to_merge_area A path to a \code{Raster*} (\url{https://cran.r-project.org/web/packages/raster/})
 #' object (folder or file) with variables to merge with.
 #' @param new_name A name to new area study after merge rasters over area.
@@ -33,19 +34,19 @@
 #' gridded_area$study_area@data %>% head()
 #' }
 #'
-merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
+merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F){
   UseMethod("merge_area", an_area)
 }
 
 #' @export
-merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F) {
+merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F) {
   warning("Nothing to do, an_area must be an SDM_area object.")
   an_area %>%
     return()
 }
 
 #' @export
-merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=NULL, new_name = F){
+merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F){
   if (!an_area$gridded){
     an_area <- an_area %>%
       make_grid.SDM_area(var_names)
@@ -67,7 +68,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names=
   )
   checkmate::assert(
     checkmate::check_null(var_names),
-    checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
+    checkmate::check_list(var_names, types = c("character"), unique = T)
   )
   checkmate::assert(
     checkmate::check_string(new_name),
