@@ -4,11 +4,14 @@
 \alias{sdm_scenario}
 \title{Creates a hierarchy of scenarios to use with SDM_area}
 \usage{
-sdm_scenario(a_scenario = NULL)
+sdm_scenario(a_scenario = NULL, var_names = NULL)
 }
 \arguments{
 \item{a_scenario}{A folder containing a hierarchy of inner folders. Leafs
 of the folders must contain rasters.}
+
+\item{var_names}{A list of layer names to keep on rasters. It try to match each variable name
+(ignoring case and partially matched)}
 }
 \value{
 A SDM_scenario object containing the whole hierarchy.
