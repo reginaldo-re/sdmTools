@@ -19,7 +19,7 @@ create_enum <- function(...) {
 }
 
 enum_as_vector<- function(a_enum){
-  checkmate::check_class(a_enum, "enumeration")
+  checkmate::assert_class(a_enum, "enumeration")
   a_enum %>% unlist(use.names = F)
 }
 
