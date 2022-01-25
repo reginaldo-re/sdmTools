@@ -90,11 +90,15 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
       unlist()
   }
 
-  raster_list <- to_merge_area %>%
-    fs::dir_ls(type = "file") %>%
-    purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+  raster_list <- c()
+  if (! var_names %>% is.null()){
+    raster_list <- to_merge_area %>%
+      fs::dir_ls(type = "file") %>%
+      purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any()) %>%
+      as.vector()
+  }
 
-  if (raster_list %>% length() != var_names %>% length()){
+  if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
     stop("At least one variable name is ambiguous. Try to use more specific variable names.")
   }
 
