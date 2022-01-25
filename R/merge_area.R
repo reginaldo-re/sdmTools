@@ -87,7 +87,9 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   }
   if (var_names %>% is.list()){
     var_names <- var_names %>%
-      unlist()
+      unlist() %>%
+      purrr::discard(~ . == "") %>%
+      as.vector()
   }
 
   raster_list <- c()
