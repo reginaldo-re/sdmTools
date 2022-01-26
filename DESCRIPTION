@@ -40,4 +40,6 @@ Imports:
     lifecycle,
     cli,
     glue,
-    withr
+    withr,
+    parallel,
+    doParallel
