@@ -85,7 +85,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 }
 
 .make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
-  checkmate::check_class(an_area, "SpatialPolygons")
+  checkmate::assert_class(an_area, "SpatialPolygons")
 
   an_area <- an_area %>%
     as("SpatialPolygonsDataFrame")

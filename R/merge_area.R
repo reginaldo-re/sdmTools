@@ -58,7 +58,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
 }
 
 .sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL){
-  checkmate::check_class(an_area, "SDM_area")
+  checkmate::assert_class(an_area, "SDM_area")
   checkmate::assert(
     checkmate::check_file_exists(to_merge_area),
     checkmate::check_directory_exists(to_merge_area),
