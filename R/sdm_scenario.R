@@ -74,18 +74,21 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
         ),
       .var.name = "Is Raster?"
       )
-    if (var_names %>% is.null()){
-      file_list %>%
-        as.list() %>%
-        return()
+    if (! var_names %>% is.null()){
+      file_list <- file_list %>%
+        purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
     }
-    else {
-      file_list %>%
-        purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any()) %>%
-        return()
-    }
+
+    file_list <- file_list %>%
+      stringr::str_remove(stringr::fixed(a_scenario %>% as.character() %>% paste0("/")))
+
+    file_list %>%
+      magrittr::set_names(file_list) %>%
+      return()
+
   } else {
     dir_list %>%
+      magrittr::set_names(dir_list %>% fs::path_file()) %>%
       purrr::map(~ .find_scenario_files(., var_names)) %>%
       return()
   }
