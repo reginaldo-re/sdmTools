@@ -107,10 +107,13 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   raster_stack <- raster_list %>%
     raster::stack()
 
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
-      result_crs <- try(raster_stack %>% raster::crs(), silent = T)
+      result_crs <- try(
+          raster_stack %>% raster::crs(),
+          silent = T
+        )
     }
   )
 

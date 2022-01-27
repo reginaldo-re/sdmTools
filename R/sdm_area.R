@@ -1,5 +1,3 @@
-utils::globalVariables(c("where",":="))
-
 #' Creates a Study Area
 #'
 #' A study area (\code{SDm_area}) represents a geographic location delimited by primitive shapes (lines and polygons)  and
@@ -50,7 +48,7 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
     checkmate::check_string(an_area, min.chars = 3)
   )
 
-  if (! an_area %>% fs::is_file()){
+  if (!an_area %>% fs::is_file()){
     stop("A study area file not found!")
   }
 
@@ -61,7 +59,7 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
 }
 
 .is_gridded <- function(an_area){
-  if (! an_area %>% is("SpatialPolygonsDataFrame")) {
+  if (!an_area %>% is("SpatialPolygonsDataFrame")) {
     return(F)
   }
   res_summ <- an_area %>%
@@ -106,10 +104,13 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     .var.name = "an_area"
   )
 
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
-      area_crs <- try(an_area %>% raster::crs())
+      area_crs <- try(
+          an_area %>% raster::crs(),
+          silent = T
+        )
     }
   )
 
@@ -129,10 +130,13 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     new_crs <- an_area %>%
       raster::crs()
   } else {
-    withr::with_message_sink(
-      tempfile(),
+    withr::with_options(
+      list(warn=-1),
       {
-        new_crs <- try(epsg_code %>% raster::crs())
+        new_crs <- try(
+            epsg_code %>% raster::crs(),
+            silent = T
+          )
       }
     )
 
@@ -185,10 +189,13 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 }
 
 .repair_area.SpatialPolygons <- function(an_area = NULL){
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
-      res_crs <- try(an_area %>% raster::crs())
+      res_crs <- try(
+          an_area %>% raster::crs(),
+          silent = T
+        )
     }
   )
 
@@ -197,12 +204,10 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     stop("Invalid CRS.")
   }
 
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
-      an_area <- try(an_area %>%
-          rgeos::gBuffer(byid=TRUE, width=0)
-      )
+      an_area <- an_area %>% rgeos::gBuffer(byid=TRUE, width=0)
     }
   )
 
@@ -214,7 +219,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
   paste(
     an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
     an_area$resolution[1],
-    ifelse(! an_area$epsg_code %>% is.null() && ! an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)), an_area$epsg_code, "")
+    ifelse(!an_area$epsg_code %>% is.null() && !an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)), an_area$epsg_code, "")
   ) %>%
     snakecase::to_snake_case() %>%
     return()
