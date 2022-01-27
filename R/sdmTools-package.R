@@ -8,7 +8,9 @@
 #' @importFrom methods is
 #' @importFrom methods slot
 #' @importFrom magrittr %>%
+#' @importFrom foreach %dopar%
 #' @importFrom stats setNames
+#' @importFrom rlang :=
 "_PACKAGE"
 
 ## usethis namespace: start

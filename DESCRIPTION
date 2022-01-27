@@ -1,10 +1,10 @@
 Package: sdmTools
-Title: What the Package Does (One Line, Title Case)
+Title: It provide tools to help in Species Distribution Modelling
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("Reginaldo", "Ré", , "reginaldo.re@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-6452-3466"))
+Description: It provide tools to help in Species Distribution Modelling.
 License: MIT + file LICENSE
 Suggests: 
     covr,
@@ -42,4 +42,5 @@ Imports:
     glue,
     withr,
     parallel,
-    doParallel
+    doParallel,
+    foreach
