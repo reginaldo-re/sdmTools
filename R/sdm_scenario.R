@@ -50,6 +50,17 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     content = .find_scenario_files(a_scenario, var_names)
   )
 
+  number_of_files <- sdm_scenario_tmp$content %>%
+    unlist() %>%
+    unname() %>%
+    unique() %>%
+    length()
+
+  checkmate::assert_true(
+    sdm_scenario_tmp %>% .get_raster_list() %>% every(~ length(.) == number_of_files),
+    .var.name = "All rasters must have the same layers!"
+  )
+
   structure(
     sdm_scenario_tmp,
     class= "SDM_scenario"
@@ -72,7 +83,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
           fs::path_ext() %>%
           magrittr::is_in(RASTER_FORMATS_EXT %>% enum_as_vector())
         ),
-      .var.name = "Is Raster?"
+      .var.name = "It's a Raster?"
       )
     if (! var_names %>% is.null()){
       file_list <- file_list %>%
@@ -88,11 +99,26 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 
   } else {
     dir_list %>%
-      magrittr::set_names(dir_list %>% fs::path_file()) %>%
+      magrittr::set_names(dir_list) %>%
       purrr::map(~ .find_scenario_files(., var_names)) %>%
       return()
   }
 }
 
+
+.get_raster_list <- function(a_scenario) {
+  flatten_scenario <- function(an_element) {
+    an_element %>%
+      purrr::discard(~ is.list(.)) %>%
+      append(an_element %>%
+               purrr::keep(~ is.list(.)) %>%
+               map(~ flatten_scenario(.)) %>%
+               flatten()) %>%
+      return()
+  }
+  a_scenario$content %>%
+    flatten_scenario() %>%
+    return()
+}
 
 
