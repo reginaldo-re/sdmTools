@@ -4,12 +4,12 @@
 \name{sdmTools-package}
 \alias{sdmTools}
 \alias{sdmTools-package}
-\title{sdmTools: What the Package Does (One Line, Title Case)}
+\title{sdmTools: It provide tools to help in Species Distribution Modelling}
 \description{
-What the package does (one paragraph).
+It provide tools to help in Species Distribution Modelling.
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Reginaldo Ré \email{reginaldo.re@gmail.com} (\href{https://orcid.org/0000-0001-6452-3466}{ORCID})
 
 }
 \keyword{internal}
