@@ -46,18 +46,22 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 .sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
   sdm_scenario_tmp <- list(
     name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
-    path = a_scenario,
-    content = .find_scenario_files(a_scenario, var_names)
+    path = a_scenario %>% fs::path_dir(),
+    content = .find_scenario_files(
+      a_scenario %>% fs::path_dir(),
+      a_scenario %>% fs::path_file() %>% fs::path_ext_remove(),
+      var_names)
   )
 
   number_of_files <- sdm_scenario_tmp$content %>%
     unlist() %>%
     unname() %>%
+    fs::path_file() %>%
     unique() %>%
     length()
 
   checkmate::assert_true(
-    sdm_scenario_tmp %>% .get_raster_list() %>% every(~ length(.) == number_of_files),
+    sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
     .var.name = "All rasters must have the same layers!"
   )
 
@@ -68,9 +72,9 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     return()
 }
 
-.find_scenario_files <- function(a_scenario = NULL, var_names = NULL){
-  file_list <- a_scenario %>% fs::dir_ls(type = "file")
-  dir_list <- a_scenario %>% fs::dir_ls(type = "dir")
+.find_scenario_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
+  file_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "file")
+  dir_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "dir")
 
   if (file_list %>% length() > 0 && dir_list %>% length() > 0){
     stop("Invalid scenario folder. Scenario folder must be hierarchically a raster or a list of rasters folders.")
@@ -90,38 +94,32 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
         purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
     }
 
-    file_list <- file_list %>%
-      stringr::str_remove(stringr::fixed(a_scenario %>% as.character() %>% paste0("/")))
-
     file_list %>%
-      magrittr::set_names(file_list) %>%
+      magrittr::set_names(base_name %>% rep(file_list %>% length())) %>%
       return()
 
   } else {
     dir_list %>%
-      magrittr::set_names(dir_list) %>%
-      purrr::map(~ .find_scenario_files(., var_names)) %>%
+      magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
+      purrr::map(~ .find_scenario_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names)) %>%
       return()
   }
 }
 
 
-.get_raster_list <- function(a_scenario) {
-  flatten_scenario <- function(an_element) {
+flatten_scenario <- function(a_scenario) {
+  .flatten_scenario <- function(an_element) {
     an_element %>%
       purrr::discard(~ is.list(.)) %>%
       append(an_element %>%
                purrr::keep(~ is.list(.)) %>%
-               map(~ flatten_scenario(.)) %>%
+               map(~ .flatten_scenario(.)) %>%
                flatten()) %>%
       return()
   }
-  raster_list <- a_scenario$content %>%
-    flatten_scenario()
-
-  raster_list %>%
-    map2(names(raster_list), ~ fs::path(.y, .x))
-
+  a_scenario$content %>%
+    .flatten_scenario() %>%
+    return()
 }
 
 
