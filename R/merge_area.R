@@ -227,8 +227,8 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   shp_grid %>%
     sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
       shp_grid@data <- shp_grid@data %>% bind_cols(
         raster_reescaled_countour_masked %>%

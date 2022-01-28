@@ -46,12 +46,10 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
 }
 
 .sdm_tidy <- function(an_area, region = NULL) {
-  withr::with_message_sink(
-    tempfile(),
+  withr::with_options(
+    list(warn=-1),
     {
-      df_tmp <- suppressWarnings(
-        an_area %>% broom::tidy()
-      )
+      df_tmp <- an_area %>% broom::tidy()
     }
   )
 
