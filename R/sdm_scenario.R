@@ -116,9 +116,12 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
                flatten()) %>%
       return()
   }
-  a_scenario$content %>%
-    flatten_scenario() %>%
-    return()
+  raster_list <- a_scenario$content %>%
+    flatten_scenario()
+
+  raster_list %>%
+    map2(names(raster_list), ~ fs::path(.y, .x))
+
 }
 
 
