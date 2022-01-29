@@ -61,17 +61,19 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
       content = tmp_content
     )
 
-    number_of_files <- sdm_scenario_tmp$content %>%
-      unlist() %>%
-      unname() %>%
-      fs::path_file() %>%
-      unique() %>%
-      length()
+    if (sdm_scenario_tmp$content %>% is.list()){
+      number_of_files <- sdm_scenario_tmp$content %>%
+        unlist() %>%
+        unname() %>%
+        fs::path_file() %>%
+        unique() %>%
+        length()
 
-    checkmate::assert_true(
-      sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
-      .var.name = "All rasters must have the same layers!"
-    )
+      checkmate::assert_true(
+        sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
+        .var.name = "All rasters must have the same layers!"
+      )
+    }
   } else {
     tmp_content <- .find_scenario_vect_files(
       a_scenario %>% fs::path_dir(),

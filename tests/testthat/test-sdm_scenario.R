@@ -77,14 +77,8 @@ test_that("Scenario folder containing a single raster.", {
         sdm_scenario()
 
       checkmate::expect_string(tmp_scenario$name, fixed = "scenarios_folder")
-      checkmate::expect_string(tmp_scenario$path, fixed = a_dir)
-      checkmate::expect_names(
-        tmp_scenario$content %>% names(),
-        identical.to = c(
-          "wc2.0_bio_5m_01.tif",
-          "wc2.0_bio_5m_02.tif"
-        )
-      )
+      checkmate::expect_string(tmp_scenario$path, fixed = a_dir %>% fs::path_dir())
+      expect_true((tmp_scenario$content %>% fs::path_file() ==  c("wc2.0_bio_5m_01.tif","wc2.0_bio_5m_02.tif")) %>% all())
     }
   )
 })
@@ -117,7 +111,7 @@ test_that("Scenario folder containing an hierarchy scenarios.", {
         sdm_scenario()
 
       checkmate::expect_string(tmp_scenario$name, fixed = "scenarios_folder")
-      checkmate::expect_string(tmp_scenario$path, fixed = a_dir)
+      checkmate::expect_string(tmp_scenario$path, fixed = a_dir %>% fs::path_dir())
       checkmate::expect_int(tmp_scenario$content %>% length(), lower = 2, upper = 2)
     }
   )
@@ -153,7 +147,7 @@ test_that("Scenario folder with only one named raster variables", {
 
       checkmate::expect_string(tmp_scenario$name, fixed = "scenarios_folder")
       checkmate::expect_string(
-          tmp_scenario$content %>% magrittr::extract2("inner_raster1"),
+          tmp_scenario$content %>% magrittr::extract2("scenarios_folder/inner_raster1") %>% fs::path_file(),
           fixed = "wc2.0_bio_5m_01.tif"
         )
     }
