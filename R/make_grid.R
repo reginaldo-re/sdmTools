@@ -91,7 +91,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     as("SpatialPolygonsDataFrame")
 
   an_area@data <- an_area@data %>%
-    dplyr::select(-(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% tidyselect::any_of())) %>%
+    dplyr::select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% tidyselect::any_of())) %>%
     tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
 
   an_area %>%
@@ -106,7 +106,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     as("SpatialLinesDataFrame")
 
   an_area@data <- an_area@data %>%
-    select(-(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% tidyselect::any_of()))
+    select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% tidyselect::any_of()))
 
   if (an_area@data %>% names() %>% length()==0){
     an_area@data <- list(

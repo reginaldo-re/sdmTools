@@ -75,7 +75,7 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
             var_names = var_names)
 
         tmp_area$study_area@data <- tmp_area$study_area@data  %>%
-          dplyr::select(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% dplyr::any_of()) %>%
+          dplyr::select(ATTR_CONTROL_NAMES %>% as_vector() %>% dplyr::any_of()) %>%
           dplyr::bind_cols(
             tmp_area$study_area@data  %>%
                       dplyr::select(-(an_area$study_area@data %>% names()))

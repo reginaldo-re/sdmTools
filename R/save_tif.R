@@ -50,7 +50,7 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
   )
 
   an_area$study_area@data <- an_area$study_area@data %>%
-    dplyr::select(-(ATTR_CONTROL_NAMES %>% enum_as_vector() %>% tidyselect::any_of()))
+    dplyr::select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% tidyselect::any_of()))
 
   tmp_raster <- an_area$study_area %>%
     terra::rasterize(tmp_raster) %>%
