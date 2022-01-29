@@ -230,12 +230,14 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   withr::with_options(
     list(warn=-1),
     {
-      shp_grid@data <- shp_grid@data %>% bind_cols(
-        raster_reescaled_countour_masked %>%
-          raster::as.list() %>%
-          purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
-          dplyr::rename_all(~ (var_names %>% unlist()))
-      )
+        suppressMessages(suppressWarnings(
+        shp_grid@data <- shp_grid@data %>% bind_cols(
+          raster_reescaled_countour_masked %>%
+            raster::as.list() %>%
+            purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
+            dplyr::rename_all(~ (var_names %>% unlist())),
+        )
+        ))
     }
   )
 
