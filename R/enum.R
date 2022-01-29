@@ -18,11 +18,26 @@ create_enum <- function(...) {
     return()
 }
 
-enum_as_vector<- function(a_enum){
-  checkmate::assert_class(a_enum, "enumeration")
-  a_enum %>% unlist(use.names = F)
+as_vector <- function(an_enum = NULL){
+  UseMethod("as_vector", an_enum)
 }
 
+as_vector.enumeration <- function(an_enum = NULL){
+  an_enum %>%
+    unlist(use.names = F)
+}
+
+is_in <- function(an_item = NULL, an_enum = NULL){
+  UseMethod("is_in", an_enum)
+}
+
+is_in.enumeration <- function(an_item = NULL, an_enum = NULL){
+  an_item %>%
+    tolower() %>%
+    magrittr::is_in(an_enum %>% tolower()) %>%
+    return()
+}
 
 ATTR_CONTROL_NAMES <- create_enum(dummy, cell_id, x_centroid, y_centroid)
-RASTER_FORMATS_EXT <- create_enum(grd, asc, sdat, rst, nc, tif, envi, bil, img)
+RAST_FORMATS_EXT <- create_enum(grd, asc, sdat, rst, nc, tif, envi, bil, img)
+VECT_FORMATS_EXT <- create_enum(svg, gpkg)
