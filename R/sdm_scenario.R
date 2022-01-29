@@ -44,26 +44,46 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 }
 
 .sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
-  sdm_scenario_tmp <- list(
-    name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
-    path = a_scenario %>% fs::path_dir(),
-    content = .find_scenario_files(
+  file_types <- a_scenario %>% fs::dir_ls(recurse = T, type = "file") %>% fs::path_ext() %>% unique()
+  checkmate::assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
+  checkmate::assert_subset(file_types, c(as_vector(RAST_FORMATS_EXT), as_vector(VECT_FORMATS_EXT)), empty.ok = F)
+
+  tmp_content <- NULL
+  if (RAST_FORMATS_EXT %>% contains(file_types)){
+    tmp_content <- .find_scenario_rast_files(
       a_scenario %>% fs::path_dir(),
       a_scenario %>% fs::path_file() %>% fs::path_ext_remove(),
       var_names)
-  )
 
-  number_of_files <- sdm_scenario_tmp$content %>%
-    unlist() %>%
-    unname() %>%
-    fs::path_file() %>%
-    unique() %>%
-    length()
+    sdm_scenario_tmp <- list(
+      name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
+      path = a_scenario %>% fs::path_dir(),
+      content = tmp_content
+    )
 
-  checkmate::assert_true(
-    sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
-    .var.name = "All rasters must have the same layers!"
-  )
+    number_of_files <- sdm_scenario_tmp$content %>%
+      unlist() %>%
+      unname() %>%
+      fs::path_file() %>%
+      unique() %>%
+      length()
+
+    checkmate::assert_true(
+      sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
+      .var.name = "All rasters must have the same layers!"
+    )
+  } else {
+    tmp_content <- .find_scenario_vect_files(
+      a_scenario %>% fs::path_dir(),
+      a_scenario %>% fs::path_file() %>% fs::path_ext_remove(),
+      var_names)
+
+    sdm_scenario_tmp <- list(
+      name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
+      path = a_scenario %>% fs::path_dir(),
+      content = tmp_content
+    )
+  }
 
   structure(
     sdm_scenario_tmp,
@@ -72,7 +92,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     return()
 }
 
-.find_scenario_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
+.find_scenario_rast_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
   file_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "file")
   dir_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "dir")
 
@@ -85,7 +105,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
       all(
         file_list %>%
           fs::path_ext() %>%
-          magrittr::is_in(RASTER_FORMATS_EXT %>% enum_as_vector())
+          magrittr::is_in(RAST_FORMATS_EXT %>% as_vector())
         ),
       .var.name = "It's a Raster?"
       )
@@ -97,13 +117,33 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     file_list %>%
       magrittr::set_names(base_name %>% rep(file_list %>% length())) %>%
       return()
-
   } else {
     dir_list %>%
       magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
-      purrr::map(~ .find_scenario_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names)) %>%
+      purrr::map(~ .find_scenario_rast_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names)) %>%
       return()
   }
+}
+
+
+.find_scenario_vect_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
+  file_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "file")
+  dir_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "dir")
+
+  if (file_list %>% length() > 0){
+    if (! var_names %>% is.null()){
+      file_list <- file_list %>%
+        purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+    }
+
+    file_list <- file_list %>%
+      magrittr::set_names(base_name %>% rep(file_list %>% length()))
+  }
+  file_list %>%
+    append(dir_list %>%
+             magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
+             purrr::map(~ .find_scenario_vect_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))) %>%
+    return()
 }
 
 
