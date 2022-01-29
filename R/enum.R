@@ -27,11 +27,11 @@ as_vector.enumeration <- function(an_enum = NULL){
     unlist(use.names = F)
 }
 
-is_in <- function(an_item = NULL, an_enum = NULL){
-  UseMethod("is_in", an_enum)
+contains <- function(an_enum = NULL, an_item = NULL){
+  UseMethod("contains", an_enum)
 }
 
-is_in.enumeration <- function(an_item = NULL, an_enum = NULL){
+contains.enumeration <- function(an_enum = NULL, an_item = NULL){
   an_item %>%
     tolower() %>%
     magrittr::is_in(an_enum %>% tolower()) %>%
