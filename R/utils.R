@@ -1,3 +1,17 @@
+.quiet <- function (expr) {
+  withr::with_options(
+    list(warn=-1),
+    {
+      withCallingHandlers(
+        force(expr),
+        warning = function(w) invokeRestart("muffleWarning"),
+        message = function(e) invokeRestart("muffleMessage")
+      )
+    }
+  )
+}
+
+
 create_enum <- function(...) {
   allowed_values <- match.call(expand.dots = TRUE)[-1L] %>%
     sapply(deparse)
@@ -37,7 +51,3 @@ contains.enumeration <- function(an_enum = NULL, an_item = NULL){
     magrittr::is_in(an_enum %>% tolower()) %>%
     return()
 }
-
-ATTR_CONTROL_NAMES <- create_enum(dummy, cell_id, x_centroid, y_centroid)
-RAST_FORMATS_EXT <- create_enum(grd, asc, sdat, rst, nc, tif, envi, bil, img)
-VECT_FORMATS_EXT <- create_enum(svg, gpkg)
