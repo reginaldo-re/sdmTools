@@ -104,11 +104,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     .var.name = "an_area"
   )
 
-  quiet(
-      area_crs <- try(
-        an_area %>% raster::crs(),
-        silent = T)
-  )
+  area_crs <- quiet(an_area %>% raster::crs())
 
   if(class(area_crs) == "try-error" || area_crs %>% is.na()){
     raster::crs(an_area) <- raster::crs("EPSG:4326")
@@ -126,12 +122,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     new_crs <- an_area %>%
       raster::crs()
   } else {
-    quiet(
-        new_crs <- try(
-          epsg_code %>% raster::crs(),
-          silent = T
-        )
-    )
+    new_crs <- quiet(epsg_code %>% raster::crs())
 
 
     checkmate::assert(
@@ -182,13 +173,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 }
 
 .repair_area.SpatialPolygons <- function(an_area = NULL){
-  quiet(
-      res_crs <- try(
-        an_area %>% raster::crs(),
-        silent = T
-      )
-  )
-
+  res_crs <- quiet(an_area %>% raster::crs())
 
   if (res_crs %>% is("try-error") || res_crs %>% is.na()){
     stop("Invalid CRS.")

@@ -1,6 +1,6 @@
 test_that("Merge non valid scenarios over SDM_area.", {
   expect_error(
-    a_sdm_area_gridded_area %>%
+    a_sdm_area %>%
       merge_scenario(system.file("rast_files", package="sdmTools"), new_path = "tmp")
   )
 })

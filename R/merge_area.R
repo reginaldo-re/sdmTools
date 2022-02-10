@@ -100,12 +100,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   raster_stack <- raster_list %>%
     raster::stack()
 
-  quiet(
-      result_crs <- try(
-        raster_stack %>% raster::crs(),
-        silent = T
-      )
-  )
+  result_crs <- quiet(raster_stack %>% raster::crs())
 
   if (result_crs %>% class() == "try-error" || result_crs %>% is.na()){
     raster::crs(raster_stack) <- raster::crs("EPSG:4326")

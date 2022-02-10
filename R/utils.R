@@ -1,14 +1,19 @@
 #' @keywords internal
 quiet <- function (expr) {
-  withr::with_options(
-    list(warn=-1),
-    {
-      withCallingHandlers(
-        force(expr),
-        warning = function(w) invokeRestart("muffleWarning"),
-        message = function(e) invokeRestart("muffleMessage")
-      )
-    }
+  return(
+    try(
+      withr::with_options(
+        list(warn=-1),
+        {
+          withCallingHandlers(
+            force(expr),
+            warning = function(w) invokeRestart("muffleWarning"),
+            message = function(e) invokeRestart("muffleMessage")
+          )
+        }
+      ),
+      silent = T
+    )
   )
 }
 
