@@ -1,7 +1,3 @@
-test_that("Trying to create an invalid objects SDM_area.", {
-  expect_warning("123" %>% areas_gt(1))
-})
-
 test_that("Removing a single area from a SpatialPolygons study area.", {
   new_SPDF <- SP %>%
     as("SpatialPolygonsDataFrame")

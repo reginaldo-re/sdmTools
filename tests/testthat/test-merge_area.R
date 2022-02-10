@@ -1,7 +1,3 @@
-test_that("Trying to merge a non SDM_area object.", {
-  expect_warning("aaa" %>% merge_area())
-})
-
 test_that("Merge raster over SDM_area with all unnamed raster variables.", {
   gridded_area <- a_sdm_area_gridded_area %>%
     merge_area(new_name = T, system.file("rast_files", package="sdmTools"))

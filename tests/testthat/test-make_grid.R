@@ -1,7 +1,3 @@
-test_that("Trying to make a grid over a non SDM_area object.", {
-  expect_warning("aaa" %>% make_grid())
-})
-
 test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all variables.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
