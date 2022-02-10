@@ -104,14 +104,10 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     .var.name = "an_area"
   )
 
-  withr::with_options(
-    list(warn=-1),
-    {
+  quiet(
       area_crs <- try(
-          an_area %>% raster::crs(),
-          silent = T
-        )
-    }
+        an_area %>% raster::crs(),
+        silent = T)
   )
 
   if(class(area_crs) == "try-error" || area_crs %>% is.na()){
@@ -130,14 +126,11 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     new_crs <- an_area %>%
       raster::crs()
   } else {
-    withr::with_options(
-      list(warn=-1),
-      {
+    quiet(
         new_crs <- try(
-            epsg_code %>% raster::crs(),
-            silent = T
-          )
-      }
+          epsg_code %>% raster::crs(),
+          silent = T
+        )
     )
 
 
@@ -189,14 +182,11 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 }
 
 .repair_area.SpatialPolygons <- function(an_area = NULL){
-  withr::with_options(
-    list(warn=-1),
-    {
+  quiet(
       res_crs <- try(
-          an_area %>% raster::crs(),
-          silent = T
-        )
-    }
+        an_area %>% raster::crs(),
+        silent = T
+      )
   )
 
 
@@ -204,11 +194,8 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     stop("Invalid CRS.")
   }
 
-  withr::with_options(
-    list(warn=-1),
-    {
+  quiet(
       an_area <- an_area %>% rgeos::gBuffer(byid=TRUE, width=0)
-    }
   )
 
   an_area %>%

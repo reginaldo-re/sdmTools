@@ -134,8 +134,12 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 
   if (file_list %>% length() > 0){
     if (! var_names %>% is.null()){
-      file_list <- file_list %>%
-        purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+      names_ok <- file_list %>%
+        map(~ var_names %>% is_in(.x %>% rgdal::readOGR(verbose = F) %>% names()) %>% all()) %>%
+        all()
+      if(! names_ok){
+        stop("Some vect file do not contain one or more variable!")
+      }
     }
 
     file_list <- file_list %>%

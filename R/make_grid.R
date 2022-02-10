@@ -39,12 +39,6 @@ make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, centroid =
 }
 
 #' @export
-make_grid.default <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
-  warning("Nothing to do, an_area must be an SDM_area object.")
-  return(an_area)
-}
-
-#' @export
 make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, centroid = T){
   checkmate::assert(
     checkmate::check_class(an_area$study_area, "SpatialPolygons"),

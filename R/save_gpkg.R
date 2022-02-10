@@ -37,7 +37,7 @@ save_gpkg <- function(an_area, file_name, file_path){
 
 #' @export
 save_gpkg.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  if (file_name %>% is.null() || file_name == "" || file_name %>% fs::path_ext() == "") {
+  if (file_name %>% is.null() || file_name == "") {
     file_name <- .guess_file_name(an_area)
   }
   .sp_save_gpkg(an_area$study_area, file_name, file_path)

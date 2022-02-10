@@ -42,12 +42,6 @@ areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F){
 }
 
 #' @export
-areas_gt.default <- function(an_area = NULL, lower_bound = 0, new_name = F) {
-  warning("Nothing to do, an_area must be an SDM_area object.")
-  return(an_area)
-}
-
-#' @export
 areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   checkmate::check_class(an_area$study_area, "SpatialPolygons")
 

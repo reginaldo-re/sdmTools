@@ -46,11 +46,8 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
 }
 
 .sdm_tidy <- function(an_area, region = NULL) {
-  withr::with_options(
-    list(warn=-1),
-    {
+  quiet(
       df_tmp <- an_area %>% broom::tidy()
-    }
   )
 
   if (!(region %>% is.null())){

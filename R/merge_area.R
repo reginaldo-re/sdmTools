@@ -39,13 +39,6 @@ merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, n
 }
 
 #' @export
-merge_area.default <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F) {
-  warning("Nothing to do, an_area must be an SDM_area object.")
-  an_area %>%
-    return()
-}
-
-#' @export
 merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F){
   if (!an_area$gridded){
     an_area <- an_area %>%
@@ -107,14 +100,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   raster_stack <- raster_list %>%
     raster::stack()
 
-  withr::with_options(
-    list(warn=-1),
-    {
+  quiet(
       result_crs <- try(
-          raster_stack %>% raster::crs(),
-          silent = T
-        )
-    }
+        raster_stack %>% raster::crs(),
+        silent = T
+      )
   )
 
   if (result_crs %>% class() == "try-error" || result_crs %>% is.na()){
@@ -227,18 +217,13 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   shp_grid %>%
     sp::spChFIDs(1:length(grid_cells) %>% as.character())
 
-  withr::with_options(
-    list(warn=-1),
-    {
-        suppressMessages(suppressWarnings(
+  quiet(
         shp_grid@data <- shp_grid@data %>% bind_cols(
           raster_reescaled_countour_masked %>%
             raster::as.list() %>%
             purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
             dplyr::rename_all(~ (var_names %>% unlist())),
         )
-        ))
-    }
   )
 
   an_area$study_area <- shp_grid
