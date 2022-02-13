@@ -1,4 +1,4 @@
-test_that("Scenario folder is invalid: contains files and folders.", {
+test_that("Scenario folder is invalid: contains a non hierarchy of files and folders.", {
   withr::with_dir(
     a_dir <- tempdir(),
     {
@@ -24,7 +24,7 @@ test_that("Scenario folder is invalid: contains files and folders.", {
   )
 })
 
-test_that("Scenario folder is invalid: contains non raster files", {
+test_that("Scenario folder is invalid: contains a mix of non raster and vect files.", {
   withr::with_dir(
     a_dir <- tempdir(),
     {
@@ -75,7 +75,7 @@ test_that("Scenario folder containing a single raster.", {
   )
 })
 
-test_that("Scenario folder containing an hierarchy scenarios.", {
+test_that("Scenario folder containing a correct hierarchy of files.", {
   withr::with_dir(
     a_dir <- tempdir(),
     {
