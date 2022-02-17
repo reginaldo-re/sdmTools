@@ -26,10 +26,7 @@ sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
 #' @export
 sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
   checkmate::assert_directory_exists(a_scenario)
-  checkmate::assert(
-    checkmate::check_null(var_names),
-    checkmate::check_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T)
-  )
+  checkmate::assert_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T, min.len = 1)
 
   if (var_names %>% is.list()){
     var_names <- var_names %>%
@@ -48,6 +45,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
   checkmate::assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
   checkmate::assert_subset(file_types, c(as_vector(RAST_FORMATS_EXT), as_vector(VECT_FORMATS_EXT)), empty.ok = F)
 
+
   tmp_content <- NULL
   if (RAST_FORMATS_EXT %>% contains(file_types)){
     tmp_content <- .find_scenario_rast_files(
@@ -58,6 +56,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     sdm_scenario_tmp <- list(
       name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
       path = a_scenario %>% fs::path_dir(),
+      is_rast = T,
       content = tmp_content
     )
 
@@ -83,6 +82,7 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     sdm_scenario_tmp <- list(
       name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
       path = a_scenario %>% fs::path_dir(),
+      is_rast = F,
       content = tmp_content
     )
   }
@@ -110,10 +110,22 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
           magrittr::is_in(RAST_FORMATS_EXT %>% as_vector())
         ),
       .var.name = "It's a Raster?"
-      )
-    if (! var_names %>% is.null()){
-      file_list <- file_list %>%
-        purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+    )
+
+    var_not_found <- var_names %>%
+      map_chr(~ ifelse(file_list %>% stringr::str_detect(.x) %>% any() %>% magrittr::not(), .x, "")) %>%
+      discard(. == "") %>%
+      paste(collapse = ", ")
+
+    if ((var_not_found %>% nchar() > 0) %>% all()){
+      stop("Variables not found:" %>% paste(var_not_found))
+    }
+
+    file_list <- file_list %>%
+      purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
+
+    if (file_list %>% length() != var_names %>% length()){
+      stop("At least one variable name is ambiguous. Try to use more specific variable names.")
     }
 
     file_list %>%
@@ -136,20 +148,23 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     if (! var_names %>% is.null()){
       names_ok <- file_list %>%
         map(~ var_names %>% is_in(.x %>% rgdal::readOGR(verbose = F) %>% names()) %>% all()) %>%
+        unlist() %>%
         all()
       if(! names_ok){
         stop("Some vect file do not contain one or more variable!")
       }
     }
 
-    file_list <- file_list %>%
-      magrittr::set_names(base_name %>% rep(file_list %>% length()))
+    file_list %>%
+      magrittr::set_names(base_name %>% rep(file_list %>% length())) %>%
+      return()
+  } else {
+    file_list %>%
+      append(dir_list %>%
+               magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
+               purrr::map(~ .find_scenario_vect_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))) %>%
+      return()
   }
-  file_list %>%
-    append(dir_list %>%
-             magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
-             purrr::map(~ .find_scenario_vect_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))) %>%
-    return()
 }
 
 
