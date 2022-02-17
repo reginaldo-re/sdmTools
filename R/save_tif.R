@@ -63,11 +63,12 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
       magrittr::not()
 
     file_path %>%
+      fs::path(file_name) %>%
       fs::dir_create(recurse = T)
 
     tmp_raster %>%
       raster::writeRaster(
-        filename = file_path %>% fs::path(file_name) %>% paste0("_", names(an_area$study_area)),
+        filename = file_path %>% fs::path(file_name) %>% fs::path(names(an_area$study_area)),
         overwrite = T,
         bylayer = T,
         format = "GTiff"
