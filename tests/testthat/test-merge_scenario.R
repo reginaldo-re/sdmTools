@@ -16,7 +16,7 @@ test_that("Merge scenario folder containing a single raster.", {
       tmp_scenario <- a_dir %>%
         sdm_scenario(var_names = list("bio_5m_01","bio_5m_02"))
 
-      a_sdm_area_gridded_area %>%
+      merged_area <- a_sdm_area_gridded_area %>%
         merge_scenario(
           to_merge_scenario = tmp_scenario,
           var_names = list("bio_5m_01","bio_5m_02"),

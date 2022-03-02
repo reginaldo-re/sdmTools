@@ -20,14 +20,14 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
       make_grid.SDM_area(var_names)
   }
 
-  return(
-  an_area %>%
+
+  an_area$study_area <- an_area %>%
       .sp_merge_scenario(
         to_merge_scenario = to_merge_scenario,
         var_names = var_names,
         output_path = output_path
       )
-  )
+  return(an_area)
 }
 
 
@@ -67,17 +67,22 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
   }
   if (fs::dir_ls(recurse = T, type = "file", glob = "*.gpkg") %>% length() > 0 ){
     col_names <- an_area$study_area@data %>% names()
-    an_area$study_area@data <- output_path %>%
+    tmp_area <- output_path %>%
       fs::dir_ls(recurse = T, type = "file", glob = "*.gpkg") %>%
       pluck(1) %>%
-      rgdal::readOGR(verbose = F) %>%
+      rgdal::readOGR(verbose = F)
+
+    tmp_area@data <- tmp_area %>%
       slot("data") %>%
       select(c(ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid)) %>%
       inner_join(
         an_area$study_area@data,
         by = c(ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid)
       ) %>%
-      select(col_names %>% all_of())
+      select(col_names %>% all_of()) %>%
+      mutate_at(ATTR_CONTROL_NAMES$cell_id, ~ 1:nrow(tmp_area@data))
+
+    an_area <- tmp_area
   }
   return(an_area)
 }
