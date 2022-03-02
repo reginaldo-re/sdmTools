@@ -38,6 +38,8 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
   .sp_save_tif(an_area, file_name, file_path)
 }
 
+#' @noRd
+#' @keywords internal
 .sp_save_tif <- function(an_area = NULL, file_name = NULL, file_path = NULL){
   checkmate::assert_class(an_area, "SDM_area")
   checkmate::assert_string(file_path)
@@ -74,10 +76,12 @@ save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL
         format = "GTiff"
       )
   }, error = function(e){
-    e$message %>% print()
-    "Error saving file:" %>%
-      paste0(fs::path(file_path, file_name)) %>%
-      paste0(".")
+    c(
+      "Error saving file:",
+      paste0(fs::path(file_path, file_name, ".")),
+      e$message
+    ) %>%
+      rlang::abort()
 
     if (clear_dir){
       file_path %>%

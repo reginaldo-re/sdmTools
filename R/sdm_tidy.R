@@ -33,18 +33,22 @@ sdm_tidy <- function(an_area, region = NULL){
 
 #' @export
 sdm_tidy.SDM_area <- function(an_area, region = NULL){
-  an_area$study_area %>%
-    .sdm_tidy(region) %>%
-    return()
+  return(
+    an_area$study_area %>%
+      .sdm_tidy(region)
+  )
 }
 
 #' @export
 sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
-  an_area %>%
-    .sdm_tidy(region) %>%
-    return()
+  return(
+    an_area %>%
+      .sdm_tidy(region)
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .sdm_tidy <- function(an_area, region = NULL) {
   quiet(
       df_tmp <- an_area %>% broom::tidy()

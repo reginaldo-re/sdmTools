@@ -49,53 +49,34 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
   )
 
   if (!an_area %>% fs::is_file()){
-    stop("A study area file not found!")
+    "A study area file not found!" %>% rlang::abort()
   }
 
-  an_area %>%
-    rgdal::readOGR(verbose = F) %>%
-    .sp_sdm_area(name, epsg_code, a_res) %>%
-    return()
-}
-
-.is_gridded <- function(an_area){
-  if (!an_area %>% is("SpatialPolygonsDataFrame")) {
-    return(F)
-  }
-  res_summ <- an_area %>%
-    raster::area() %>%
-    summary()
-
-  res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1) %>%
-    return ()
-}
-
-.get_resolution <- function(an_area){
-  if (an_area %>% .is_gridded()){
-    coords <- an_area@polygons %>%
-      magrittr::extract2(1) %>%
-      slot("Polygons") %>%
-      magrittr::extract2(1) %>%
-      slot(("coords"))
-
-    abs(coords[1,1] - coords[2,1]) %>%
-      rep(2) %>%
-      c() %>%
-      return()
-  }
-  else {
-    NULL %>%
-      return()
-  }
+  return(
+    an_area %>%
+      rgdal::readOGR(verbose = F) %>%
+      .sp_sdm_area(
+        name = name,
+        epsg_code = epsg_code,
+        a_res = a_res
+      )
+  )
 }
 
 #' @export
 sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
-  an_area %>%
-    .sp_sdm_area(name, epsg_code, a_res) %>%
-    return()
+  return(
+    an_area %>%
+      .sp_sdm_area(
+        name = name,
+        epsg_code = epsg_code,
+        a_res = a_res
+      )
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
   checkmate::assert_string(name)
   checkmate::assert(
@@ -123,7 +104,6 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
       raster::crs()
   } else {
     new_crs <- quiet(epsg_code %>% raster::crs())
-
 
     checkmate::assert(
       checkmate::check_class(new_crs, "try-error"),
@@ -156,43 +136,93 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     scenarios = list()
   )
 
-  structure(
-    sdm_area_tmp,
-    class= "SDM_area"
-  ) %>%
-    return()
+  return(
+    structure(
+      sdm_area_tmp,
+      class= "SDM_area"
+    )
+  )
 }
 
+
+#' @noRd
+#' @keywords internal
 .repair_area <- function(an_area = NULL){
-  UseMethod(".repair_area", an_area)
-}
-
-.repair_area.default <- function(an_area = NULL){
-  an_area %>%
-    return()
-}
-
-.repair_area.SpatialPolygons <- function(an_area = NULL){
-  res_crs <- quiet(an_area %>% raster::crs())
-
-  if (res_crs %>% is("try-error") || res_crs %>% is.na()){
-    stop("Invalid CRS.")
-  }
-
-  quiet(
-      an_area <- an_area %>% rgeos::gBuffer(byid=TRUE, width=0)
+  checkmate::assert(
+    checkmate::check_class(an_area, "SpatialPolygons"),
+    checkmate::check_class(an_area, "SpatialLines"),
+    .var.name = "an_area"
   )
 
-  an_area %>%
-    return()
+  if (!an_area %>% is("SpatialPolygons")){
+      return(an_area)
+  }
+
+  res_crs <- quiet(
+    an_area %>%
+      raster::crs()
+  )
+  if (res_crs %>% is("try-error") || res_crs %>% is.na()){
+    "Invalid CRS." %>%
+      rlang::abort()
+  }
+  quiet(
+    an_area <- an_area %>%
+      rgeos::gBuffer(byid = TRUE, width = 0)
+  )
+  return(an_area)
 }
 
+#' @noRd
+#' @keywords internal
 .guess_file_name <- function(an_area = NULL){
-  paste(
-    an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
-    an_area$resolution[1],
-    ifelse(!an_area$epsg_code %>% is.null() && !an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)), an_area$epsg_code, "")
-  ) %>%
-    snakecase::to_snake_case() %>%
-    return()
+  checkmate::assert_class(an_area, "SDM_area")
+  return(
+    paste(
+      an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
+      an_area$resolution[1],
+      ifelse(
+        !an_area$epsg_code %>% is.null() && !an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)),
+        an_area$epsg_code,
+        ""
+      )
+    ) %>%
+      snakecase::to_snake_case()
+  )
+}
+
+#' @noRd
+#' @keywords internal
+.is_gridded <- function(an_area){
+  checkmate::check_class(an_area, "Spatial")
+  if (!an_area %>% is("SpatialPolygonsDataFrame")) {
+    return(F)
+  }
+  res_summ <- an_area %>%
+    raster::area() %>%
+    summary()
+
+  return(res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1))
+}
+
+#' @noRd
+#' @keywords internal
+.get_resolution <- function(an_area){
+  checkmate::check_class(an_area, "Spatial")
+  if (an_area %>% .is_gridded()){
+    coords <- an_area@polygons %>%
+      magrittr::extract2(1) %>%
+      slot("Polygons") %>%
+      magrittr::extract2(1) %>%
+      slot(("coords"))
+
+    return(
+      abs(coords[1,1] - coords[2,1]) %>%
+        rep(2) %>%
+        c()
+    )
+  }
+  else {
+    return(NULL)
+  }
 }

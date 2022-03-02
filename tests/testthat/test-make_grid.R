@@ -18,6 +18,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) with all var
   expect_string(gridded_area$name, "test_area_grid")
 })
 
+
 test_that("Making a grid over study area (SpatialPolygonsDataframe) with one variable.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%

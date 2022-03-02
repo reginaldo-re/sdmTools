@@ -45,11 +45,14 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
       make_grid.SDM_area(var_names)
   }
 
-  an_area %>%
-    .sp_merge_area(to_merge_area, var_names, new_name) %>%
-    return()
+  return(
+    an_area %>%
+      .sp_merge_area(to_merge_area, var_names, new_name)
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL){
   checkmate::assert_class(an_area, "SDM_area")
   checkmate::assert(
@@ -94,7 +97,8 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   }
 
   if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
-    stop("At least one variable name is ambiguous. Try to use more specific variable names.")
+    "At least one variable name is ambiguous. Try to use more specific variable names." %>%
+      rlang::abort()
   }
 
   raster_stack <- raster_list %>%
@@ -111,7 +115,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
 
   raster_stack %>%
     raster::writeRaster(
-      raster_tmp_file,
+      filename = raster_tmp_file,
       format = "GTiff",
       bylayer = F, #bylayer = T,
       #suffix = lista_rasters_bio %>% names(),
@@ -123,7 +127,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     paste0(".gpkg")
 
   an_area$study_area %>%
-    raster::aggregate(dissolve=T) %>%
+    raster::aggregate(dissolve = T) %>%
     #rgeos::gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
     #rgeos::gUnionCascaded() %>%
     as("SpatialPolygonsDataFrame") %>%
@@ -146,8 +150,8 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     paste0(".tif")
 
   raster_reescaled_countour <- gdalUtils::gdalwarp(
-    raster_tmp_file,
-    raster_file_reescaled_countour,
+    srcfile = raster_tmp_file,
+    dstfile = raster_file_reescaled_countour,
     s_srs = raster::crs(raster_stack),
     t_srs = raster::crs(an_area$crs),
     cutline = shp_countour_file,
@@ -176,8 +180,8 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     raster::stack()
 
   raster_grid <- gdalUtils::gdal_rasterize(
-    shp_area_file,
-    tempfile() %>% paste0(".tif"),
+    src_datasource = shp_area_file,
+    dst_filename = tempfile() %>% paste0(".tif"),
     #burn = 0,
     a = ATTR_CONTROL_NAMES$cell_id,
     #at = T,
@@ -232,6 +236,5 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     an_area$name <- new_name
   }
 
-  an_area %>%
-    return()
+  return(an_area)
 }

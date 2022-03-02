@@ -8,7 +8,7 @@ merge_scenario(
   an_area = NULL,
   to_merge_scenario = NULL,
   var_names = NULL,
-  new_path = NULL
+  output_path = NULL
 )
 }
 \arguments{

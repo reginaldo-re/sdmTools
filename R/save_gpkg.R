@@ -79,10 +79,12 @@ save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL
       overwrite_layer = T
     )
   }, error = function(e){
-    e$message %>% print()
-    "Error saving file:" %>%
-      paste0(fs::path(file_path, file_name)) %>%
-      paste0(".")
+    c(
+      "Error saving file:",
+      paste0(fs::path(file_path, file_name, ".")),
+      e$message
+      ) %>%
+      rlang::abort()
 
     if (clear_dir){
       file_path %>%

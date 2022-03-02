@@ -4,7 +4,8 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
 
   if (o_file %>% is_null() || shp %>% is_null()){
     if (sp_occurrences %>% names() %>% length() != 3){
-      stop("Both o_file and sp_names must have diffent values then NULL.")
+      "Both o_file and sp_names must have diffent values then NULL." %>%
+        rlang::abort()
     }
   }
 
@@ -15,7 +16,8 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
     dplyr::mutate(across(is.character, stringr::str_squish))
 
   if (sp_occurrences %>% names() %>% length() != 3){
-    stop("Occurrences file must be three columns named: species, long, lat.")
+    "Occurrences file must be three columns named: species, long, lat." %>%
+      rlang::abort()
   }
 
   sp_column_name <- sp_occurrences %>%
@@ -42,9 +44,10 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
     raster::crs(sp_occurrences) <- a_crs
   }
 
-  sp_occurrences %>%
-    sp::spTransform(raster::crs(shp)) %>%
-    return()
+  return(
+    sp_occurrences %>%
+      sp::spTransform(raster::crs(shp))
+  )
 }
 
 #' @export

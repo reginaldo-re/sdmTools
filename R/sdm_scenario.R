@@ -26,32 +26,37 @@ sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
 #' @export
 sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
   checkmate::assert_directory_exists(a_scenario)
-  checkmate::assert_list(var_names, types = c("character"), any.missing = F, all.missing = F, unique = T, min.len = 1)
+  var_names <- var_names %>%
+    unlist() %>%
+    purrr::discard(~ . == "")
 
-  if (var_names %>% is.list()){
-    var_names <- var_names %>%
-      unlist() %>%
-      purrr::discard(~ . == "") %>%
-      as.vector()
-    checkmate::assert_vector(var_names, min.len = 1)
-  }
+  checkmate::assert_character(var_names, any.missing = F, all.missing = F, unique = T, min.len = 1)
 
-  .sdm_scenario(a_scenario, var_names) %>%
-    return()
+  return(
+    a_scenario %>%
+      .sdm_scenario(var_names)
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
-  file_types <- a_scenario %>% fs::dir_ls(recurse = T, type = "file") %>% fs::path_ext() %>% unique()
+  file_types <- a_scenario %>%
+    fs::dir_ls(recurse = T, type = "file") %>%
+    fs::path_ext() %>%
+    unique()
   checkmate::assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
   checkmate::assert_subset(file_types, c(as_vector(RAST_FORMATS_EXT), as_vector(VECT_FORMATS_EXT)), empty.ok = F)
-
+  checkmate::assert_true(check_scenario(a_scenario))
 
   tmp_content <- NULL
   if (RAST_FORMATS_EXT %>% contains(file_types)){
-    tmp_content <- .find_scenario_rast_files(
-      a_scenario %>% fs::path_dir(),
-      a_scenario %>% fs::path_file() %>% fs::path_ext_remove(),
-      var_names)
+    tmp_content <- a_scenario %>%
+      fs::path_dir() %>%
+      .find_scenario_rast_files(
+        a_scenario %>% fs::path_file() %>% fs::path_ext_remove(),
+        var_names
+      )
 
     sdm_scenario_tmp <- list(
       name = a_scenario %>% fs::path_file() %>%  fs::path_ext_remove(),
@@ -59,20 +64,6 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
       is_rast = T,
       content = tmp_content
     )
-
-    if (sdm_scenario_tmp$content %>% is.list()){
-      number_of_files <- sdm_scenario_tmp$content %>%
-        unlist() %>%
-        unname() %>%
-        fs::path_file() %>%
-        unique() %>%
-        length()
-
-      checkmate::assert_true(
-        sdm_scenario_tmp %>% flatten_scenario() %>% every(~ length(.) == number_of_files),
-        .var.name = "All rasters must have the same layers!"
-      )
-    }
   } else {
     tmp_content <- .find_scenario_vect_files(
       a_scenario %>% fs::path_dir(),
@@ -87,100 +78,89 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     )
   }
 
-  structure(
-    sdm_scenario_tmp,
-    class= "SDM_scenario"
-  ) %>%
-    return()
+  return(
+    structure(
+      sdm_scenario_tmp,
+      class= "SDM_scenario"
+    )
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .find_scenario_rast_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
   file_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "file")
   dir_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "dir")
 
   if (file_list %>% length() > 0 && dir_list %>% length() > 0){
-    stop("Invalid scenario folder. Scenario folder must be hierarchically a raster or a list of rasters folders.")
+    "Invalid scenario folder. Scenario folder must be hierarchically a raster or a list of rasters folders." %>%
+      rlang::abort()
   }
 
   if (file_list %>% length() > 0){
-    checkmate::assert_true(
-      all(
-        file_list %>%
-          fs::path_ext() %>%
-          magrittr::is_in(RAST_FORMATS_EXT %>% as_vector())
-        ),
-      .var.name = "It's a Raster?"
-    )
+    var_found <- file_list %>%
+      fs::path_dir() %>%
+      unique() %>%
+      detect_vars(var_names) %>%
+      purrr::compact() %>%
+      unlist()
 
     var_not_found <- var_names %>%
-      map_chr(~ ifelse(file_list %>% stringr::str_detect(.x) %>% any() %>% magrittr::not(), .x, "")) %>%
-      discard(. == "") %>%
-      paste(collapse = ", ")
+      extract(!var_names %>% magrittr::is_in(var_found))
 
-    if ((var_not_found %>% nchar() > 0) %>% all()){
-      stop("Variables not found:" %>% paste(var_not_found))
+    if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+      c(
+        "Variables not found:",
+        var_not_found
+      ) %>%
+        rlang::abort()
     }
 
     file_list <- file_list %>%
       purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any())
 
-    if (file_list %>% length() != var_names %>% length()){
-      stop("At least one variable name is ambiguous. Try to use more specific variable names.")
-    }
-
-    file_list %>%
-      magrittr::set_names(base_name %>% rep(file_list %>% length())) %>%
-      return()
+    return(file_list)
   } else {
-    dir_list %>%
-      magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
-      purrr::map(~ .find_scenario_rast_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names)) %>%
-      return()
+    return(
+      dir_list %>%
+        magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
+        purrr::map(~ .find_scenario_rast_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))
+    )
   }
 }
 
 
+#' @noRd
+#' @keywords internal
 .find_scenario_vect_files <- function(base_path = NULL, base_name = NULL, var_names = NULL){
   file_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "file")
   dir_list <- base_path %>% fs::path(base_name) %>% fs::dir_ls(type = "dir")
 
   if (file_list %>% length() > 0){
-    if (! var_names %>% is.null()){
-      names_ok <- file_list %>%
-        map(~ var_names %>% is_in(.x %>% rgdal::readOGR(verbose = F) %>% names()) %>% all()) %>%
-        unlist() %>%
-        all()
-      if(! names_ok){
-        stop("Some vect file do not contain one or more variable!")
-      }
+    var_found <- file_list %>%
+      unique() %>%
+      detect_vars(var_names) %>%
+      purrr::compact() %>%
+      unlist()
+
+    var_not_found <- var_names %>%
+      extract(!var_names %>% magrittr::is_in(var_found))
+
+    if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+      c(
+        "Variables not found:",
+        var_not_found
+      ) %>%
+        rlang::abort()
     }
 
-    file_list %>%
-      magrittr::set_names(base_name %>% rep(file_list %>% length())) %>%
-      return()
+    return(file_list)
   } else {
-    file_list %>%
-      append(dir_list %>%
-               magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
-               purrr::map(~ .find_scenario_vect_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))) %>%
-      return()
+    return(
+      dir_list %>%
+        magrittr::set_names(base_name %>% rep(dir_list %>% length()) %>% fs::path(dir_list %>% fs::path_file())) %>%
+        purrr::map(~ .find_scenario_vect_files(base_path, stringr::str_remove(., paste0(base_path, "/")), var_names))
+    )
   }
 }
-
-
-flatten_scenario <- function(a_scenario) {
-  .flatten_scenario <- function(an_element) {
-    an_element %>%
-      purrr::discard(~ is.list(.)) %>%
-      append(an_element %>%
-               purrr::keep(~ is.list(.)) %>%
-               map(~ .flatten_scenario(.)) %>%
-               flatten()) %>%
-      return()
-  }
-  a_scenario$content %>%
-    .flatten_scenario() %>%
-    return()
-}
-
 

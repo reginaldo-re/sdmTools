@@ -115,14 +115,14 @@ test_that("Scenario folder containing a single raster.", {
       }
 
       system.file("rast_files", package="sdmTools") %>%
-        fs::dir_copy(a_dir, overwrite = T)
+        fs::dir_copy(a_dir %>% fs::path("inner_raster1"), overwrite = T)
 
       tmp_scenario <- a_dir %>%
         sdm_scenario(var_names = list("bio_5m_01","bio_5m_02"))
 
       checkmate::expect_string(tmp_scenario$name, fixed = "scenarios_folder")
       checkmate::expect_string(tmp_scenario$path, fixed = a_dir %>% fs::path_dir())
-      expect_true((tmp_scenario$content %>% fs::path_file() ==  c("wc2.0_bio_5m_01.tif","wc2.0_bio_5m_02.tif")) %>% all())
+      expect_true((tmp_scenario$content %>% unlist() %>% fs::path_file() ==  c("wc2.0_bio_5m_01.tif","wc2.0_bio_5m_02.tif")) %>% all())
     }
   )
 })
@@ -187,7 +187,7 @@ test_that("Scenario folder with only one named raster variables", {
       checkmate::expect_string(
           tmp_scenario$content %>% magrittr::extract2("scenarios_folder/inner_raster1") %>% fs::path_file(),
           fixed = "wc2.0_bio_5m_01.tif"
-        )
+      )
     }
   )
 })
@@ -231,7 +231,7 @@ test_that("Scenario folder containing a hierarchy vector scenarios.", {
 
 
       tmp_scenario <- a_dir %>%
-        sdm_scenario(list("geocodigo"))
+        sdm_scenario(var_names = list("geocodigo", "nome"))
 
       checkmate::expect_string(tmp_scenario$name, fixed = "scenarios_folder")
       checkmate::expect_string(tmp_scenario$path, fixed = a_dir %>% fs::path_dir())

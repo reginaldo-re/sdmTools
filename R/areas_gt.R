@@ -62,10 +62,11 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
     an_area$name <- new_name
   }
 
-  an_area %>%
-    return()
+  return(an_area)
 }
 
+#' @noRd
+#' @keywords internal
 .sp_areas_gt <- function(an_area = NULL, lower_bound = 0) {
   checkmate::check_class(an_area, "SpatialPolygons")
   checkmate::assert_numeric(lower_bound, len = 1, lower = 0.0)
@@ -85,11 +86,11 @@ areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
   }
 
   if (remain_areas_agg@polygons %>% length() > 0){
-    an_area %>%
-      raster::intersect(remain_areas_agg) %>%
-      return()
+    return(
+      an_area %>%
+        raster::intersect(remain_areas_agg)
+    )
   } else {
-    remain_areas_agg %>%
-      return()
+    return(remain_areas_agg)
   }
 }

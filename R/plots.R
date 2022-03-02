@@ -20,17 +20,18 @@ area_geomap <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat
 
 #' @export
 area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, lat = "lat", long = "long", group = "group", colour = "black", fill = NA){
-  an_area$study_area %>%
-    .sp_area_geomap(
-      title,
-      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
-      lat,
-      long,
-      group,
-      colour,
-      fill
-    ) %>%
-    return()
+  return(
+    an_area$study_area %>%
+      .sp_area_geomap(
+        title,
+        subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
+        lat,
+        long,
+        group,
+        colour,
+        fill
+      )
+  )
 }
 
 .sp_area_geomap <- function(an_area = NULL, title = "", subtitle = "", lat = "lat", long = "long", group = "group", colour = "black", fill = NA) {
@@ -76,8 +77,7 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
       ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
   }
 
-  map_tmp %>%
-    return()
+  return(map_tmp)
 }
 
 
@@ -108,6 +108,5 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
         fill = NA
       )
   }
-  geo_map %>%
-    return()
+  return(geo_map)
 }

@@ -39,16 +39,15 @@ make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, centroid =
 }
 
 #' @export
-make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, centroid = T){
+make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
   checkmate::assert(
     checkmate::check_class(an_area$study_area, "SpatialPolygons"),
     checkmate::check_class(an_area$study_area, "SpatialLines")
   )
   if (an_area$gridded){
-    warning("Nothing to do, the grid over study area already exists.")
-
-    an_area %>%
-      return()
+    "Nothing to do, the grid over study area already exists." %>%
+      rlang::warn()
+    return(an_area)
   }
   checkmate::assert(
     checkmate::check_string(new_name),
@@ -57,10 +56,20 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
   if (an_area$study_area %>% is("SpatialPolygons")){
     an_area$study_area <- an_area$study_area %>%
-      .make_grid_SpatialPolygons(an_area$resolution, var_names, new_name, centroid)
+      .make_grid_SpatialPolygons(
+        a_res = an_area$resolution,
+        var_names = var_names,
+        new_name = new_name,
+        centroid = centroid
+      )
   } else if (an_area$study_area %>% is("SpatialLines")){
     an_area$study_area <- an_area$study_area %>%
-      .make_grid_SpatialLines(an_area$resolution, var_names, new_name, centroid)
+      .make_grid_SpatialLines(
+        a_res = an_area$resolution,
+        var_names = var_names,
+        new_name = new_name,
+        centroid = centroid
+      )
   }
 
   an_area$gridded <- T
@@ -74,10 +83,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     an_area$name <- new_name
   }
 
-  an_area %>%
-    return()
+  return(an_area)
 }
 
+#' @noRd
+#' @keywords internal
 .make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
   checkmate::assert_class(an_area, "SpatialPolygons")
 
@@ -88,11 +98,19 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     dplyr::select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% tidyselect::any_of())) %>%
     tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
 
-  an_area %>%
-    .sp_make_grid(a_res, var_names, centroid) %>%
-    return()
+  return(
+    an_area %>%
+      .sp_make_grid(
+        a_res = a_res,
+        var_names = var_names,
+        centroid = centroid
+      )
+  )
 }
 
+
+#' @noRd
+#' @keywords internal
 .make_grid_SpatialLines <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
   checkmate::check_class(an_area, "SpatialLines")
 
@@ -113,11 +131,19 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
       tibble::rowid_to_column(ATTR_CONTROL_NAMES$cell_id)
   }
 
-  an_area %>%
-    .sp_make_grid(a_res, var_names, new_name, centroid) %>%
-    return()
+  return(
+    an_area %>%
+      .sp_make_grid(
+        a_res = a_res,
+        var_names = var_names,
+        new_name = new_name,
+        centroid = centroid
+      )
+  )
 }
 
+#' @noRd
+#' @keywords internal
 .sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
   grid_cell_id <- value <- x <- y <- NULL
   checkmate::assert(
@@ -149,7 +175,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
   raster_area <- an_area %>%
     raster::raster(vals=0) %>%
     raster::writeRaster(
-      raster_tmp_file,
+      filename = raster_tmp_file,
       format = "GTiff",
       bylayer = F,
       options = c("dstnodata =-9999.0"),
@@ -157,14 +183,14 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
     )
 
   shp_grid <- gdalUtils::gdal_rasterize(
-    shp_tmp_file,
-    raster_tmp_file,
+    src_datasource = shp_tmp_file,
+    dst_filename = raster_tmp_file,
     burn = 0,
     at = T,
     co = c("BIGTIFF=YES"),
     a_nodata = "-9999.0",
     tr = a_res,
-    tap= T,
+    tap = T,
     ot = 'Float32',
     output_Raster = T,
     te = an_area %>% raster::bbox() %>% as("vector"),
@@ -178,7 +204,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
   grid_cells <- shp_grid %>%
     rgeos::gIntersects(
-      shp_area_bkp,
+      spgeom2 = shp_area_bkp,
       byid = TRUE,
       prepared = T,
       returnDense = F
@@ -203,7 +229,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
 
   if (centroid){
     centroids <- an_area %>%
-      rgeos::gCentroid(byid=TRUE)
+      rgeos::gCentroid(byid = TRUE)
 
     an_area@data <- an_area@data %>%
       dplyr::bind_cols(centroids@coords %>% as.data.frame()) %>%
@@ -213,7 +239,8 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
   return(an_area)
 }
 
-
+#' @noRd
+#' @keywords internal
 .select_vars <- function(a_df = NULL, var_names = NULL){
   checkmate::assert_data_frame(a_df)
   checkmate::assert(
@@ -245,11 +272,5 @@ make_grid.SDM_area <- function(an_area = NULL, var_names=NULL, new_name = F, cen
       names(a_df) <- var_names
     }
   }
-  a_df %>%
-    return()
-}
-
-
-.remove_attr_control <- function(names = NULL){
-
+  return(a_df)
 }
