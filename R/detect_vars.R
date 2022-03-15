@@ -27,13 +27,23 @@ detect_vars.SDM_area <- function(an_area = NULL, var_names = NULL){
 #' @noRd
 #' @keywords internal
 detect_vars.SDM_scenario <- function(an_area = NULL, var_names = NULL){
-  return(
-    an_area$content %>%
-      pluck(1) %>%
-      fs::path_file() %>%
-      fs::path_ext_remove() %>%
-      .detect_vars(var_names)
-  )
+  if (an_area$is_rast){
+    return(
+      an_area$content %>%
+        pluck(1) %>%
+        fs::path_file() %>%
+        fs::path_ext_remove() %>%
+        .detect_vars(var_names)
+    )
+  } else {
+    return(
+      an_area$content %>%
+        pluck(1) %>%
+        rgdal::readOGR(verbose = F) %>%
+        names() %>%
+        .detect_vars(var_names)
+    )
+  }
 }
 
 
@@ -69,12 +79,17 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
     )
   }
   else if (checkmate::test_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector())){
-    return(
-      an_area %>%
-        rgdal::readOGR(verbose = F) %>%
-        names() %>%
-        .detect_vars(var_names)
-    )
+    if (an_area %>% length() == 1) {
+      return(
+        an_area %>%
+          rgdal::readOGR(verbose = F) %>%
+          names() %>%
+          .detect_vars(var_names)
+      )
+    } else {
+      "Only one file is accepted!" %>%
+        rlang::abort()
+    }
   }
   else {
     return(

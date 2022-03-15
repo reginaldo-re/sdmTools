@@ -105,8 +105,9 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
       purrr::compact() %>%
       unlist()
 
-    var_not_found <- var_names %>%
-      extract(!var_names %>% magrittr::is_in(var_found))
+    #var_not_found <- var_names %>%
+    #  extract(!var_names %>% magrittr::is_in(var_found))
+    var_not_found <- var_names %>% setdiff(var_found)
 
     if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
       c(
@@ -138,18 +139,18 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 
   if (file_list %>% length() > 0){
     var_found <- file_list %>%
-      unique() %>%
-      detect_vars(var_names) %>%
-      purrr::compact() %>%
-      unlist()
+      purrr::map(~ .x %>% detect_vars(var_names)) %>%
+      purrr::compact()
 
-    var_not_found <- var_names %>%
-      extract(!var_names %>% magrittr::is_in(var_found))
+    var_not_found <- var_found %>%
+      purrr::map(~ var_names %>% setdiff(.x)) %>%
+      unlist()
 
     if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
       c(
         "Variables not found:",
-        var_not_found
+        var_not_found %>%
+          paste(names(.), ., sep = ":")
       ) %>%
         rlang::abort()
     }

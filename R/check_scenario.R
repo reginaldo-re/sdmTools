@@ -19,7 +19,9 @@ check_scenario.character <- function(a_scenario = NULL){
   if (RAST_FORMATS_EXT %>% contains(file_types) %>% all()){
     file_list <- .check_scenario(a_scenario)
     layer_names <- file_list %>%
-      pluck(1)
+      pluck(1) %>%
+      unname() %>%
+      unlist()
 
     invalid_layers <- file_list %>%
       flatten_scenario() %>%

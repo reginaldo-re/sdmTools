@@ -37,104 +37,116 @@
 #' plot(new_sdm_area)
 #' }
 #'
-sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
+sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+  checkmate::assert_string(name, min.chars = 1)
+  checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
+  checkmate::assert_number(a_res, lower = 0.0001)
+  checkmate::assert_string(dir_path, min.chars = 1)
+  if(dir_path %>% fs::dir_exists()){
+    dir_path %>%
+      fs::dir_delete()
+  }
+  dir_path <- quiet(
+    dir_path %>%
+      fs::dir_create()
+  )
+  checkmate::assert_directory_exists(dir_path)
+
   UseMethod("sdm_area", an_area)
 }
 
 #' @export
-sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
-  checkmate::assert(
-    checkmate::check_file_exists(an_area),
-    checkmate::check_string(an_area, min.chars = 3)
-  )
+sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+  checkmate::assert_file_exists(an_area)
+  new_sdm_area <- an_area %>%
+    rgdal::readOGR(verbose = F) %>%
+    .sp_sdm_area(
+      name = name,
+      epsg_code = epsg_code,
+      a_res = a_res,
+      dir_path = dir_path
+    )
 
-  if (!an_area %>% fs::is_file()){
-    "A study area file not found!" %>% rlang::abort()
-  }
-
-  return(
-    an_area %>%
-      rgdal::readOGR(verbose = F) %>%
-      .sp_sdm_area(
-        name = name,
-        epsg_code = epsg_code,
-        a_res = a_res
-      )
-  )
+  return(new_sdm_area)
 }
 
 #' @export
-sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
-  return(
-    an_area %>%
-      .sp_sdm_area(
-        name = name,
-        epsg_code = epsg_code,
-        a_res = a_res
-      )
-  )
+sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+  new_sdm_area <- an_area %>%
+    .sp_sdm_area(
+      name = name,
+      epsg_code = epsg_code,
+      a_res = a_res,
+      dir_path = dir_path
+    )
+
+  return(new_sdm_area)
 }
 
 #' @noRd
 #' @keywords internal
-.sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL){
-  checkmate::assert_string(name)
+.sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
+  checkmate::assert_string(name, min.chars = 1)
+  epsg_code <- epsg_code %>% toupper()
+  checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
+  checkmate::assert_number(a_res)
+  checkmate::assert_directory_exists(dir_path)
 
-  area_crs <- quiet(an_area %>% raster::crs())
+  area_crs <- quiet(
+    an_area %>%
+      raster::crs()
+  )
 
   if(class(area_crs) == "try-error" || area_crs %>% is.na()){
     raster::crs(an_area) <- raster::crs("EPSG:4326")
   }
-  #checkmate::assert_class(result_crs, "CRS", .var.name = "an_area@crs")
 
-  checkmate::assert(
-    checkmate::check_null(epsg_code),
-    checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:"),
-    .var.name = "epsg_code"
+  crs_result <- quiet(
+    epsg_code %>% raster::crs()
+  )
+  checkmate::assert_class(crs_result, "CRS", .var.name = "epsg_code")
+
+  is_gridded <- quiet(
+      an_area %>%
+        .is_gridded()
   )
 
-  new_crs <- NULL
-  if (epsg_code %>% is.null()){
-    new_crs <- an_area %>%
-      raster::crs()
-  } else {
-    new_crs <- quiet(epsg_code %>% raster::crs())
-
-    checkmate::assert(
-      checkmate::check_class(new_crs, "try-error"),
-      checkmate::check_class(new_crs, "CRS"),
-      checkmate::check_scalar_na(new_crs),
-      .var.name = "epsg_code"
-    )
+  if( is_gridded %>% is.na()){
+    "An_area object has an invalid CRS!" %>%
+      rlang::abort()
   }
 
-  gridded <- an_area %>%
-    .is_gridded()
-
-  if (gridded && a_res %>% is.null()){
-    a_res <- an_area %>%
+  if (is_gridded){
+    calculated_res <- an_area %>%
       .get_resolution()
+    checkmate::assert_number(calculated_res)
+    checkmate::assert_number(a_res, lower = calculated_res, upper = calculated_res)
   }
-  checkmate::assert_numeric(a_res, len = 2, lower = 0.0001)
-
   an_area <- an_area %>%
-    sp::spTransform(new_crs) %>%
+    sp::spTransform(crs_result) %>%
     .repair_area()
 
   sdm_area_tmp <- list(
-    name = (name %>% fs::path_file() %>%  fs::path_ext_remove()),
-    crs = new_crs,
+    name = name,
+    crs = crs_result,
     epsg_code = epsg_code,
     resolution = a_res,
-    gridded = gridded,
+    gridded = is_gridded,
     study_area = an_area,
     scenarios = list()
   )
+
+
+  an_area %>%
+    save_gpkg(
+      file_name = name %>% snakecase::to_snake_case(),
+      file_path = dir_path)
+
 
   return(
     structure(
@@ -150,26 +162,21 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 .repair_area <- function(an_area = NULL){
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
-    checkmate::check_class(an_area, "SpatialLines"),
-    .var.name = "an_area"
+    checkmate::check_class(an_area, "SpatialLines")
   )
 
-  if (!an_area %>% is("SpatialPolygons")){
-      return(an_area)
-  }
-
-  res_crs <- quiet(
+  crs_result <- quiet(
     an_area %>%
       raster::crs()
   )
-  if (res_crs %>% is("try-error") || res_crs %>% is.na()){
-    "Invalid CRS." %>%
-      rlang::abort()
+  checkmate::assert_class(crs_result, "CRS", .var.name = "epsg_code")
+
+  if (an_area %>% class() == "SpatialPolygons"){
+    quiet(
+      an_area <- an_area %>%
+        rgeos::gBuffer(byid = TRUE, width = 0)
+    )
   }
-  quiet(
-    an_area <- an_area %>%
-      rgeos::gBuffer(byid = TRUE, width = 0)
-  )
   return(an_area)
 }
 
@@ -216,11 +223,7 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
       magrittr::extract2(1) %>%
       slot(("coords"))
 
-    return(
-      abs(coords[1,1] - coords[2,1]) %>%
-        rep(2) %>%
-        c()
-    )
+    return(abs(coords[1,1] - coords[2,1]))
   }
   else {
     return(NULL)

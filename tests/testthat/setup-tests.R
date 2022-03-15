@@ -59,12 +59,15 @@ SP <- SpatialPolygons(
 )
 crs(SP) <- CRS("EPSG:6933")
 
+SL = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
+crs(SL) <- CRS("EPSG:6933")
+
 SPDF <- rgdal::readOGR(system.file("vect_files/brasil_uf.gpkg", package="sdmTools"), layer = "brasil_uf", verbose = F)
 SLDF <- rgdal::readOGR(system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
 a_sdm_area <- SPDF %>%
-  sdm_area("Test area", "EPSG:6933", c(50000, 50000))
+ sdm_area("Test area", "EPSG:6933", 50000, dir_path = "/tmp/setup_test")
 
 
 a_sdm_area_gridded_area <- a_sdm_area %>%
-  make_grid()
+   make_grid()

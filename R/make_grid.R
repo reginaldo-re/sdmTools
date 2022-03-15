@@ -65,7 +65,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
   } else if (an_area$study_area %>% is("SpatialLines")){
     an_area$study_area <- an_area$study_area %>%
       .make_grid_SpatialLines(
-        a_res = an_area$resolution,
+        a_res = an_area$resolution[[1]],
         var_names = var_names,
         new_name = new_name,
         centroid = centroid
@@ -151,7 +151,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  checkmate::assert_numeric(a_res, len = 2, lower = 0.0001)
+  checkmate::assert_number(a_res, lower = 0.0001)
   checkmate::assert(
     checkmate::check_null(var_names),
     checkmate::check_list(var_names, unique = T)
@@ -189,7 +189,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
     at = T,
     co = c("BIGTIFF=YES"),
     a_nodata = "-9999.0",
-    tr = a_res,
+    tr = c(a_res, a_res),
     tap = T,
     ot = 'Float32',
     output_Raster = T,

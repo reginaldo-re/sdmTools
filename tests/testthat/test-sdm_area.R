@@ -1,141 +1,210 @@
-test_that("Trying to create an invalid objects SDM_area.", {
-  expect_error(NULL %>% sdm_area("Test area"))
-  expect_error(NULL %>% sdm_area("Test area", NULL))
-  expect_error(NULL %>% sdm_area("Test area", NULL, NULL))
-  expect_error(NULL %>% sdm_area("Test area", NULL, c(1,1)))
-  expect_error(NULL %>% sdm_area("Test area", "EPSG:6933", c(1,1)))
+describe("Given a invalid vect format file name", {
+  it("When creating a SDM area, then I expect an error.", {
+    expect_error("zzzzz" %>% sdm_area("Invalid Area", "EPSG:6933", 50000))
+  })
+})
 
-  expect_error(SP %>% sdm_area("Test area"))
-  expect_error(SP %>% sdm_area("Test area", "EPSG:XXXX"))
-  expect_error(SP %>% sdm_area("Test area", "EPSG:6933"))
-  expect_error(SP %>% sdm_area("Test area", "EPSG:6933", c(1)))
-  expect_error(SP %>% sdm_area("Test area", "EPSG:6933", c(0,2)))
-  expect_error(SP %>% sdm_area("Test area", "EPSG:XXXX", c(0,2)))
-  expect_error(SP %>% sdm_area(a_res= c(0,2)))
+describe("Given a SpatialLines object", {
+  it("When creating a SDM area, then I expect a new SDM area object.", {
+    new_area <- SL %>%
+      sdm_area("Test area", "EPSG:6933", 50000, "/tmp/testing")
 
-  expect_error("123" %>% sdm_area("Test area", "EPSG:6933", c(0,2)))
-  expect_error("zzzzz" %>% sdm_area("Test area", "EPSG:6933", c(50000, 50000)))
-  expect_error(".gpkg" %>% sdm_area("Test area", "EPSG:6933", c(50000, 50000)))
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:6933")
+    expect_equal(new_area$crs, raster::crs("EPSG:6933"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
 })
 
 
-test_that("Creating a study area from SpatialLines.", {
-  sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
-  crs(sl1) <- CRS("EPSG:6933")
-  new_area <- sl1 %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
+describe("Given a SpatialPolygons object", {
+  it("When creating a SDM area, then I expect a new SDM area object.", {
+    new_area <- SP %>%
+      sdm_area("Test area", "EPSG:6933", 50000, "/tmp/testing")
 
-  expect_equal(new_area$name, "Test area")
-  expect_equal(new_area$epsg, "EPSG:6933")
-  expect_equal(new_area$crs, raster::crs("EPSG:6933"))
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-  #expect_error(new_area %>% areas_gt(10000))
-})
-
-test_that("Trying to remove an small area from a SpatialLines study area.", {
-  sl1 = SpatialLines(list(Lines(Line(cbind(c(2,4,4,1,2),c(2,3,5,4,2))), "sp")))
-  crs(sl1) <- CRS("EPSG:6933")
-  new_area <- sl1 %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
-
-  expect_error(new_area %>% areas_gt(10000))
-})
-
-test_that("Creating a study area from SpatialPolygons.", {
-  new_area <- SP %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_equal(new_area$epsg, "EPSG:6933")
-  expect_equal(new_area$crs, raster::crs("EPSG:6933"))
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-})
-
-test_that("Creating a study area from SpatialLinesDataFrame file keeping the original CRS.", {
-  new_area <- system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools") %>%
-    sdm_area(name = "Test area", a_res = c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-})
-
-test_that("Creating a study area from SpatialPolygonsDataFrame file keeping the original CRS.", {
-  new_area <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area(name = "Test area", a_res = c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-})
-
-test_that("Creating a study area from SpatialLinesDataFrame file.", {
-  new_area <- system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools") %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
-})
-
-test_that("Creating a study area from SpatialPolygonsDataFrame file.", {
-  new_area <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000))
-
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_false(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:6933")
+    expect_equal(new_area$crs, raster::crs("EPSG:6933"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
 })
 
 
-test_that("Creating a study area from a gridded SpatialPolygonsDataFrame file.", {
-  new_area <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    make_grid()
 
-  new_area <- new_area$study_area %>%
-    sdm_area("Test area")
+describe("Given a SpatialLinesDataFrame object", {
+  it("When creating a SDM area, then I expect a new SDM area object.", {
+    new_area <- SLDF %>%
+      sdm_area("Test area", "EPSG:6933", 50000, "/tmp/testing")
 
-  expect_equal(new_area$name, "Test area")
-  expect_false(new_area$crs %>% is.na())
-  expect_equal(new_area$resolution, c(50000, 50000))
-  expect_true(new_area$gridded)
-  expect_s3_class(new_area, "SDM_area")
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:6933")
+    expect_equal(new_area$crs, raster::crs("EPSG:6933"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
+  it("When creating a SDM area changing the CRS, then I expect a new SDM area object.", {
+    new_area <- SLDF %>%
+      sdm_area("Test area", "EPSG:5880", 50000, "/tmp/testing")
+
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:5880")
+    expect_equal(new_area$crs, raster::crs("EPSG:5880"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
 })
 
 
-test_that("Trying to get resolution from a not gridded SDM_area.", {
-  expect_null(NULL %>% .get_resolution())
+describe("Given a SpatialPolygonsDataFrame object", {
+  it("When creating a SDM area, then I expect a new SDM area object.", {
+    new_area <- SPDF %>%
+      sdm_area("Test area", "EPSG:6933", 50000, "/tmp/testing")
+
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:6933")
+    expect_equal(new_area$crs, raster::crs("EPSG:6933"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
+
+
+  it("When creating a SDM area changing the CRS, then I expect a new SDM area object.", {
+    new_area <- SPDF %>%
+      sdm_area("Test area", "EPSG:5880", 50000, "/tmp/testing")
+
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:5880")
+    expect_equal(new_area$crs, raster::crs("EPSG:5880"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
+
+  it("When creating a SDM area from a SpatialPolygonsDataFrame object without a CRS, then I expect that SpatialPolygonsDataFrame object has been converted to EPSG:4326.", {
+    SPDF_tmp <- SPDF %>%
+      spTransform("EPSG:4326")
+    crs(SPDF_tmp) <- NA
+
+    new_area <- SPDF_tmp %>%
+      sdm_area("Test area", "EPSG:5880", 50000, "/tmp/testing")
+
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:5880")
+    expect_equal(new_area$crs, raster::crs("EPSG:5880"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
+
+  it("When creating a SDM area from a SpatialPolygonsDataFrame object with an invalid CRS, then I expect an error.", {
+    SPDF_tmp <- SPDF
+    crs(SPDF_tmp) <- NA
+
+    expect_error(
+      SPDF_tmp %>%
+        sdm_area("Test area", "EPSG:5880", 50000, "/tmp/testing")
+    )
+  })
+
+
+
+  it("When creating a SDM area with a blank name, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = "", "EPSG:6933", 50000, "/tmp/testing")
+    )
+  })
+
+  it("When creating a SDM area with a NULL name, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = NULL, "EPSG:6933", 50000, "/tmp/testing")
+    )
+  })
+
+  it("When creating a SDM area with a invalid EPSG code, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = "Test area", "6933", 50000, "/tmp/testing")
+    )
+  })
+
+  it("When creating a SDM area with a NULL EPSG code, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = "Test area", epsg_code = NULL, 50000, "/tmp/testing")
+    )
+  })
+
+  it("When creating a SDM area with a invalid resolution, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = "Test area", epsg_code = "EPSG:6933", 0, "/tmp/testing")
+    )
+  })
+  it("When creating a SDM area with a NULL dir_path, then I expect an error.", {
+    expect_error(
+      SPDF %>%
+        sdm_area(name = "Test area", epsg_code = "EPSG:6933", 50000)
+    )
+  })
 })
 
-test_that("Get file name.", {
-  file_name_tmp <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
-    sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-    .guess_file_name()
+describe("Given a gridded SpatialPolygonsDataFrame object", {
+  it("When creating a SDM area with unequal resolution, then I expect an error.", {
+   expect_error(a_sdm_area_gridded_area$study_area %>%
+      sdm_area("Test area", "EPSG:5880", 10000, "/tmp/testing"))
+  })
 
-  expect_string(file_name_tmp, "test_area_50000_epsg_6933.gpkg")
+
+  it("When get resolution, then I expect a NULL result.", {
+    expect_null(
+      SPDF %>%
+        .get_resolution()
+    )
+  })
+
 })
 
-test_that("Repair an area with invalid CRS.", {
-  expect_error(
-    P %>%
-      list() %>%
-      SpatialPolygons() %>%
-      .repair_area()
-  )
+describe("Given a non gridded SpatialPolygonsDataFrame object", {
+  it("When get resolution, then I expect a NULL result.", {
+    expect_null(
+      SPDF %>%
+        .get_resolution()
+    )
+  })
 })
+
+
+describe("Given a valid filename", {
+  it("When creating a SDM area, then I expect a new SDM area object.", {
+    new_area <- system.file("vect_files/brasil_uf.gpkg", package="sdmTools") %>%
+      sdm_area("Test area", "EPSG:6933", 50000, "/tmp/testing")
+
+    expect_equal(new_area$name, "Test area")
+    expect_equal(new_area$epsg, "EPSG:6933")
+    expect_equal(new_area$crs, raster::crs("EPSG:6933"))
+    expect_equal(new_area$resolution, 50000)
+    expect_false(new_area$gridded)
+    expect_s3_class(new_area, "SDM_area")
+    checkmate::expect_file_exists("/tmp/testing/test_area.gpkg")
+  })
+})
+
 
 
 

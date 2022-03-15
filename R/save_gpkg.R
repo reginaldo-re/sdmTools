@@ -45,8 +45,33 @@ save_gpkg.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NUL
 
 
 #' @export
-save_gpkg.Spatial <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  .sp_save_gpkg(an_area, file_name, file_path)
+save_gpkg.SpatialLines <- function(an_area = NULL, file_name = NULL, file_path = NULL){
+  an_area <- an_area %>%
+    as("SpatialLinesDataFrame")
+
+  an_area@data <- 1:(an_area@lines %>% length()) %>%
+    as.data.frame() %>%
+    rename(id=".")
+
+  .sp_save_gpkg(
+    an_area = an_area %>% as("SpatialLinesDataFrame"),
+    file_name = file_name,
+    file_path = file_path)
+}
+
+#' @export
+save_gpkg.SpatialPolygons <- function(an_area = NULL, file_name = NULL, file_path = NULL){
+  an_area <- an_area %>%
+    as("SpatialPolygonsDataFrame")
+
+  an_area@data <- 1:(an_area@polygons %>% length()) %>%
+    as.data.frame() %>%
+    rename(id=".")
+
+  .sp_save_gpkg(
+    an_area = an_area %>% as("SpatialPolygonsDataFrame"),
+    file_name = file_name,
+    file_path = file_path)
 }
 
 .sp_save_gpkg <- function(an_area = NULL, file_name = NULL, file_path = NULL){

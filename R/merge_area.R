@@ -175,9 +175,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   raster_reescaled_countour_masked <- raster_reescaled_countour %>%
     terra::rast()
 
-  raster_reescaled_countour_masked <- raster_reescaled_countour_masked %>%
-    terra::mask(an_area$study_area %>% terra::vect(), touches=F) %>%
-    raster::stack()
+  quiet(
+    raster_reescaled_countour_masked <- raster_reescaled_countour_masked %>%
+      terra::mask(an_area$study_area %>% terra::vect(), touches=F) %>%
+      raster::stack()
+  )
 
   raster_grid <- gdalUtils::gdal_rasterize(
     src_datasource = shp_area_file,

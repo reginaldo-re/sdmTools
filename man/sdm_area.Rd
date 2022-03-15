@@ -4,7 +4,13 @@
 \alias{sdm_area}
 \title{Creates a Study Area}
 \usage{
-sdm_area(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL)
+sdm_area(
+  an_area = NULL,
+  name = NULL,
+  epsg_code = NULL,
+  a_res = NULL,
+  dir_path = NULL
+)
 }
 \arguments{
 \item{an_area}{An object of package \code{sp} (\url{https://cran.r-project.org/web/packages/sp})

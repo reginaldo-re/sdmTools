@@ -7,7 +7,6 @@ test_that("Merge raster over SDM_area with all unnamed raster variables.", {
 })
 
 
-
 test_that("Merge raster over non gridded SDM_area with all unnamed raster variables.", {
   gridded_area <- SPDF %>%
     sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
