@@ -34,87 +34,146 @@
 #' gridded_area$study_area@data %>% head()
 #' }
 #'
-merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F){
+merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+  assert(
+    check_file_exists(to_merge_area),
+    check_directory_exists(to_merge_area),
+    check_class(to_merge_area, "RasterLayer"),
+    check_class(to_merge_area, "RasterStack"),
+    check_class(to_merge_area, "RasterBrick")
+  )
+  assert(
+    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
+  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(dir_path, min.chars = 1, null.ok = T)
+
+  if (!an_area$scenarios %>% is.null()){
+    "It is not possible to merge an area in a sdm_area when scenarios is not null! Please assign null to scenario." %>%
+      abort()
+  }
+
   UseMethod("merge_area", an_area)
 }
 
+
+
 #' @export
-merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = F){
+merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
   if (!an_area$gridded){
     an_area <- an_area %>%
-      make_grid.SDM_area(var_names)
+      make_grid.SDM_area(
+        var_names = var_names
+      )
   }
 
-  return(
-    an_area %>%
-      .sp_merge_area(to_merge_area, var_names, new_name)
-  )
+  an_area$study_area <- an_area$study_area %>%
+    .sp_merge_area(
+      to_merge_area = to_merge_area,
+      var_names = var_names,
+      resolution = an_area$resolution
+    )
+
+  an_area <- an_area %>%
+      save_gpkg(
+        new_name = new_name,
+        dir_path = dir_path
+      )
+
+
+  return(an_area)
 }
 
 #' @noRd
 #' @keywords internal
-.sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL){
-  checkmate::assert_class(an_area, "SDM_area")
-  checkmate::assert(
-    checkmate::check_file_exists(to_merge_area),
-    checkmate::check_directory_exists(to_merge_area),
-    checkmate::check_class(to_merge_area, "RasterLayer"),
-    checkmate::check_class(to_merge_area, "RasterStack"),
-    checkmate::check_class(to_merge_area, "RasterBrick")
+.sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, resolution = NULL){
+  assert(
+    check_class(an_area, "SpatialPolygonsDataFrame"),
+    check_class(an_area, "SpatialLinesDataFrame")
   )
-  checkmate::assert(
-    checkmate::check_null(var_names),
-    checkmate::check_list(var_names, types = c("character"), unique = T)
+  assert(
+    check_file_exists(to_merge_area),
+    check_directory_exists(to_merge_area),
+    check_class(to_merge_area, "RasterLayer"),
+    check_class(to_merge_area, "RasterStack"),
+    check_class(to_merge_area, "RasterBrick")
   )
-  checkmate::assert(
-    checkmate::check_string(new_name),
-    checkmate::check_logical(new_name, len = 1)
+  assert(
+    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
+  assert_number(resolution, lower = 0.0001)
 
-  if (var_names %>% is.null()){
-    if (to_merge_area %>% fs::is_file()){
-      to_merge_area <- to_merge_area %>%
-        fs::path_dir()
-    }
-    var_names <- to_merge_area %>%
-      fs::dir_ls(type = "file") %>%
-      fs::path_file() %>%
-      fs::path_ext_remove()
-  }
-  if (var_names %>% is.list()){
-    var_names <- var_names %>%
-      unlist() %>%
-      purrr::discard(~ . == "") %>%
-      as.vector()
+  var_found <- to_merge_area %>%
+    detect_vars(var_names)
+
+  if (var_found %>% is_empty()){
+    "None variables found in to_merge_area." %>%
+      abort()
   }
 
+  var_not_found <- var_names %>%
+    setdiff(var_found) %>%
+    unlist(recursive = T)
+
+  if (test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+    c(
+      "Variables not found:",
+      var_not_found
+    ) %>%
+      abort()
+  }
+
+  var_conflicted <- var_found %>%
+    extract(
+      an_area %>%
+        detect_vars() %>%
+        is_in(var_found)
+    )
+  if (!var_conflicted %>% is_empty()){
+    c(
+      "These variables already exists in SDM_area object:",
+      var_conflicted
+    ) %>%
+      abort()
+  }
+
+  if (!to_merge_area %>% is_dir()){
+    to_merge_area <- to_merge_area %>%
+      path_dir()
+  }
+
+  var_names <- var_found
   raster_list <- c()
   if (! var_names %>% is.null()){
     raster_list <- to_merge_area %>%
-      fs::dir_ls(type = "file") %>%
-      purrr::keep(~ .x %>% stringr::str_detect(stringr::fixed(var_names, ignore_case = T)) %>% any()) %>%
+      dir_ls(type = "file") %>%
+      keep(~ .x %>% str_detect(fixed(var_names %>% unlist(), ignore_case = T)) %>% any()) %>%
       as.vector()
   }
 
   if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
     "At least one variable name is ambiguous. Try to use more specific variable names." %>%
-      rlang::abort()
+      abort()
   }
 
   raster_stack <- raster_list %>%
-    raster::stack()
+    stack()
 
-  result_crs <- quiet(raster_stack %>% raster::crs())
+  result_crs <- quiet(raster_stack %>% crs())
 
   if (result_crs %>% class() == "try-error" || result_crs %>% is.na()){
-    raster::crs(raster_stack) <- raster::crs("EPSG:4326")
+    crs(raster_stack) <- crs("EPSG:4326")
+    "EPSG code not found in to_merge_area. Atributing EPSG:4326 to to_merge_area." %>%
+      inform()
   }
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
 
   raster_stack %>%
-    raster::writeRaster(
+    writeRaster(
       filename = raster_tmp_file,
       format = "GTiff",
       bylayer = F, #bylayer = T,
@@ -123,44 +182,41 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
       overwrite=T,
     )
 
-  shp_countour_file <- tempfile() %>%
-    paste0(".gpkg")
+  shp_countour_file <- tempfile()
 
-  an_area$study_area %>%
-    raster::aggregate(dissolve = T) %>%
-    #rgeos::gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
-    #rgeos::gUnionCascaded() %>%
+  an_area %>%
+    aggregate(dissolve = T) %>%
+    #gBuffer(width=-(min(c(cell_width, cell_height)))/10, capStyle = "SQUARE", joinStyle = "BEVEL") %>%
+    #gUnionCascaded() %>%
     as("SpatialPolygonsDataFrame") %>%
-    save_gpkg(shp_countour_file)
+    save_gpkg(
+      new_name = shp_countour_file %>% path_file(),
+      dir_path = shp_countour_file %>% path_dir()
+    )
 
-  shp_area_file <- tempfile() %>%
-    paste0(".gpkg")
+  shp_area_file <- tempfile()
 
-  an_area$study_area %>%
-    save_gpkg(shp_area_file)
-
-  shp_grid_file <- tempfile() %>%
-    paste0(".gpkg")
-
-  an_area$study_area %>%
-    as("SpatialPolygonsDataFrame") %>%
-    save_gpkg(shp_grid_file)
+  an_area %>%
+    save_gpkg(
+      new_name = shp_area_file %>% path_file(),
+      dir_path = shp_area_file %>% path_dir()
+    )
 
   raster_file_reescaled_countour <- tempfile() %>%
     paste0(".tif")
 
-  raster_reescaled_countour <- gdalUtils::gdalwarp(
+  raster_reescaled_countour <- gdalwarp(
     srcfile = raster_tmp_file,
     dstfile = raster_file_reescaled_countour,
-    s_srs = raster::crs(raster_stack),
-    t_srs = raster::crs(an_area$crs),
-    cutline = shp_countour_file,
+    s_srs = crs(raster_stack),
+    t_srs = crs(an_area),
+    cutline = shp_countour_file %>% paste0(".gpkg"),
     crop_to_cutline = T,
     r = 'average',
-    tr = an_area$resolution,
+    tr = c(resolution, resolution),
     tap = T,
-    te = an_area$study_area %>% raster::bbox() %>% as("vector"),
-    te_srs = raster::crs(an_area$crs),
+    te = an_area %>% bbox() %>% as("vector"),
+    te_srs = crs(an_area),
     dstnodata = "-9999.0",
     ot = 'Float32',
     co = c("BIGTIFF=YES"), #"COMPRESS=DEFLATE", "PREDICTOR=2","ZLEVEL=9"),
@@ -170,73 +226,64 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     overwrite = T,
     verbose = F
   ) %>%
-    raster::crop(an_area$study_area)
+    crop(an_area)
 
   raster_reescaled_countour_masked <- raster_reescaled_countour %>%
-    terra::rast()
+    rast()
 
   quiet(
     raster_reescaled_countour_masked <- raster_reescaled_countour_masked %>%
-      terra::mask(an_area$study_area %>% terra::vect(), touches=F) %>%
-      raster::stack()
+      mask(an_area %>% vect(), touches=F) %>%
+      stack()
   )
 
-  raster_grid <- gdalUtils::gdal_rasterize(
-    src_datasource = shp_area_file,
+  raster_grid <- gdal_rasterize(
+    src_datasource = shp_area_file %>% paste0(".gpkg"),
     dst_filename = tempfile() %>% paste0(".tif"),
     #burn = 0,
     a = ATTR_CONTROL_NAMES$cell_id,
     #at = T,
     co = c("BIGTIFF=YES"),
     a_nodata = "-9999.0",
-    tr = an_area$resolution,
+    tr = c(resolution, resolution),
     #tap= T,
     ot = 'Float32',
     output_Raster = T,
-    te = an_area$study_area %>% raster::bbox() %>% as("vector"),
+    te = an_area %>% bbox() %>% as("vector"),
     verbose = F
   )
 
   raster_grid <- raster_grid %>%
-    terra::rast() %>%
-    terra::mask(
+    rast() %>%
+    mask(
       raster_reescaled_countour_masked %>%
-        terra::rast() %>%
-        magrittr::extract2(1)
+        rast() %>%
+        extract2(1)
     )
 
   grid_cells <- raster_grid %>%
     as.vector() %>%
-    purrr::discard(is.na)
+    discard(is.na)
 
-  an_area$study_area@data <- an_area$study_area@data %>%
+  an_area@data <- an_area@data %>%
     as.data.frame()
 
-  shp_grid <- an_area$study_area[grid_cells %>% as.integer(),]
+  shp_grid <- an_area[grid_cells %>% as.integer(),]
 
   shp_grid@data[ATTR_CONTROL_NAMES$cell_id] <- 1:length(grid_cells)
   shp_grid %>%
-    sp::spChFIDs(1:length(grid_cells) %>% as.character())
+    spChFIDs(1:length(grid_cells) %>% as.character())
 
   quiet(
-        shp_grid@data <- shp_grid@data %>% bind_cols(
-          raster_reescaled_countour_masked %>%
-            raster::as.list() %>%
-            purrr::map_dfc(~ .x %>% raster::values() %>% purrr::discard(is.na) %>% as.data.frame()) %>%
-            dplyr::rename_all(~ (var_names %>% unlist())),
-        )
+      shp_grid@data <- shp_grid@data %>% bind_cols(
+        raster_reescaled_countour_masked %>%
+          as.list() %>%
+          map_dfc(~ .x %>% values() %>% discard(is.na) %>% as.data.frame()) %>%
+          rename_all(~ (var_names %>% unlist())),
+      )
   )
 
-  an_area$study_area <- shp_grid
-
-  if (checkmate::test_logical(new_name, len = 1)){
-    if (new_name) {
-      an_area$name <- an_area$name %>%
-        paste0("_", to_merge_area %>% fs::path_file())
-    }
-  } else if (checkmate::test_string(new_name)){
-    an_area$name <- new_name
-  }
+  an_area <- shp_grid
 
   return(an_area)
 }

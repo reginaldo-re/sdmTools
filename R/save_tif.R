@@ -2,11 +2,11 @@
 #'
 #' @param an_area A \code{SDM_area} object representing the area of the study.
 #'
-#' @param file_name The name of file which the \code{sp} object will be saved.
-#' The \code{file_name} will be prepended to each attribute name of the \code{sp} object.
-#' If the \code{file_name} parameter is equal to NULL, it is replaced by
+#' @param new_name The name of file which the \code{sp} object will be saved.
+#' The \code{new_name} will be prepended to each attribute name of the \code{sp} object.
+#' If the \code{new_name} parameter is equal to NULL, it is replaced by
 #' a name computed based on attributes of the \code{SDM_area} object.
-#' @param file_path The path in which the file will be saved.
+#' @param dir_path The path in which the file will be saved.
 #'
 #' @export
 #' @examples
@@ -24,69 +24,113 @@
 #' tmp_dir <- tempdir()
 #'
 #' gridded_area %>%
-#'    save_tif(file_path = tmp_dir)
+#'    save_tif(dir_path = tmp_dir)
 #' }
-save_tif <- function(an_area, file_name, file_path){
+save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(dir_path, min.chars = 1, null.ok = T)
+
   UseMethod("save_tif", an_area)
 }
 
+
 #' @export
-save_tif.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  if (file_name %>% is.null()) {
-    file_name <- .guess_file_name(an_area)
+save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  if (!new_name %>% is.null()){
+    new_name <- new_name %>%
+      path_ext_remove()
+
+    an_area$sdm_area_name <- new_name
   }
-  .sp_save_tif(an_area, file_name, file_path)
+
+  if (dir_path %>% is.null()){
+    tmp_dir_path <- tempdir() %>%
+      path(stringi::stri_rand_strings(1,6))
+    quiet(
+      tmp_dir_path %>%
+        path(an_area$sdm_area_name) %>%
+        dir_create()
+    )
+    assert_directory_exists(tmp_dir_path)
+    .sp_save_tif(
+      an_area = an_area$study_area,
+      new_name = an_area$sdm_area_name,
+      dir_path = tmp_dir_path,
+      crs = an_area$study_area %>% crs(),
+      resolution = an_area$resolution
+    )
+
+    if (an_area$dir_path %>% dir_exists()){
+      an_area$dir_path %>%
+        dir_delete()
+    }
+    quiet(
+      an_area$dir_path %>%
+        path(an_area$sdm_area_name) %>%
+        dir_create()
+    )
+    assert_directory_exists(an_area$dir_path)
+    tmp_dir_path %>%
+      dir_copy(an_area$dir_path, overwrite = T)
+
+    tmp_dir_path %>%
+      dir_delete()
+  } else {
+    an_area$dir_path <- dir_path
+    if (an_area$dir_path %>% dir_exists()){
+      an_area$dir_path %>%
+        dir_delete()
+    }
+    quiet(
+      an_area$dir_path %>%
+        path(an_area$sdm_area_name) %>%
+        dir_create()
+    )
+    .sp_save_tif(
+      an_area = an_area$study_area,
+      new_name = an_area$sdm_area_name,
+      dir_path = an_area$dir_path,
+      crs = an_area$study_area %>% crs(),
+      resolution = an_area$resolution
+    )
+  }
+  return(an_area)
 }
 
 #' @noRd
 #' @keywords internal
-.sp_save_tif <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  checkmate::assert_class(an_area, "SDM_area")
-  checkmate::assert_string(file_path)
-  checkmate::assert_string(file_name)
+.sp_save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL, crs = NULL, resolution = NULL){
+  assert_class(an_area, "SpatialPolygons")
+  assert_string(new_name, min.chars = 1)
+  assert_directory_exists(dir_path %>% path(new_name))
+  assert_class(crs, "CRS")
+  assert_number(resolution, lower = 0.0001)
 
-  tmp_raster <- raster::raster(
-    crs  = an_area$study_area %>% raster::crs(),
-    ext = an_area$study_area %>% raster::extent(),
-    res = an_area$resolution
+  tmp_raster <- raster(
+    crs = crs,
+    ext = an_area %>% extent(),
+    res = resolution
   )
 
-  an_area$study_area@data <- an_area$study_area@data %>%
-    dplyr::select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% tidyselect::any_of()))
+  an_area@data <- an_area@data %>%
+    select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% any_of()))
 
-  tmp_raster <- an_area$study_area %>%
-    terra::rasterize(tmp_raster) %>%
-    raster::deratify()
+  tmp_raster <- an_area %>%
+    rasterize(tmp_raster) %>%
+    deratify()
 
-
-  result = tryCatch({
-    clear_dir <- file_path %>%
-      fs::dir_exists() %>%
-      magrittr::not()
-
-    file_path %>%
-      fs::path(file_name) %>%
-      fs::dir_create(recurse = T)
-
+  result = quiet(
     tmp_raster %>%
-      raster::writeRaster(
-        filename = file_path %>% fs::path(file_name) %>% fs::path(names(an_area$study_area)),
+      writeRaster(
+        filename = dir_path %>% path(new_name) %>% path(names(an_area)),
         overwrite = T,
         bylayer = T,
         format = "GTiff"
       )
-  }, error = function(e){
-    c(
-      "Error saving file:",
-      paste0(fs::path(file_path, file_name, ".")),
-      e$message
-    ) %>%
-      rlang::abort()
-
-    if (clear_dir){
-      file_path %>%
-        fs::dir_delete()
-    }
-  })
+  )
+  if (result %>% class() == "try-error"){
+    result %>%
+      abort()
+  }
 }
 

@@ -4,15 +4,15 @@ repair_area <- function(an_area = NULL){
 }
 
 repair_area.SpatialPolygons <- function(an_area = NULL){
-  res_crs <- quiet(an_area %>% raster::crs())
+  res_crs <- quiet(an_area %>% crs())
 
   if (res_crs %>% is("try-error") || res_crs %>% is.na()){
     "Invalid CRS." %>%
-      rlang::abort()
+      abort()
   }
 
   quiet(
-    an_area <- an_area %>% rgeos::gBuffer(byid = TRUE, width = 0)
+    an_area <- an_area %>% gBuffer(byid = TRUE, width = 0)
   )
 
   return(an_area)

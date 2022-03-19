@@ -29,23 +29,120 @@
 #'
 #' tmp_dir %>%
 #'    paste0("/test_area_grid_50000_epsg_6933.gpkg") %>%
-#'    fs::file_info()
+#'    file_info()
 #' }
-save_gpkg <- function(an_area, file_name, file_path){
+save_gpkg <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(dir_path, min.chars = 1, null.ok = T)
+
   UseMethod("save_gpkg", an_area)
 }
 
 #' @export
-save_gpkg.SDM_area <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  if (file_name %>% is.null() || file_name == "") {
-    file_name <- .guess_file_name(an_area)
+save_gpkg.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  if (!new_name %>% is.null()){
+    new_name <- new_name %>%
+      path_ext_remove()
+
+    an_area$sdm_area_name <- new_name %>%
+      path_ext_remove()
   }
-  .sp_save_gpkg(an_area$study_area, file_name, file_path)
+  if (!an_area$dir_path %>% dir_exists()){
+    an_area$dir_path %>%
+      dir_create()
+  }
+
+  an_area$dir_path %>%
+    dir_ls(type = "file") %>%
+    file_delete()
+
+  if (dir_path %>% is.null() || dir_path == an_area$dir_path){
+    an_area$study_area %>%
+      save_gpkg(
+        new_name = an_area$sdm_area_name,
+        dir_path = an_area$dir_path
+      )
+
+    # .sp_save_gpkg(
+    #   an_area = an_area$study_area,
+    #   new_name = an_area$sdm_area_name,
+    #   dir_path = an_area$dir_path,
+    #   crs = an_area$study_area %>% crs()
+    # )
+  } else {
+    an_area$study_area %>%
+      save_gpkg(
+        new_name = an_area$sdm_area_name,
+        dir_path = dir_path
+      )
+
+    # an_area$study_area %>%
+    #   .sp_save_gpkg(
+    #     new_name = an_area$sdm_area_name,
+    #     dir_path = dir_path,
+    #     crs = an_area$study_area %>% crs()
+    #   )
+  }
+
+  if(!an_area$scenarios %>% is.null()){
+    an_area$dir_path %>%
+      dir_ls(type = "directory") %>%
+      discard(~ . == dir_path %>% path("scenarios")) %>%
+      dir_delete()
+
+    tmp_scenario <- an_area$scenarios$dir_path %>%
+      path(an_area$scenarios$sdm_scenario_name) %>%
+      sdm_scenario()
+
+    if (an_area$scenarios %>% compare(tmp_scenario) %>% length() > 0){
+      "The content of dir " %>%
+        paste0(an_area$scenarios$dir_path, ". is corrupted!") %>%
+        abort()
+    }
+
+    if (an_area$scenarios$dir_path %>% path(an_area$scenarios$sdm_scenario_name) != dir_path %>% path(an_area$scenarios$sdm_scenario_name)){
+      an_area$scenarios$dir_path %>%
+        path(an_area$scenarios$sdm_scenario_name) %>%
+        dir_copy(dir_path %>% path(an_area$scenarios$sdm_scenario_name), overwrite = T)
+    }
+
+    an_area$scenarios <- dir_path %>%
+      path("scenarios") %>%
+      sdm_scenario()
+  }
+
+  if (!dir_path %>% is.null()){
+    an_area$dir_path <- dir_path
+  }
+
+  return(an_area)
 }
 
+#' @export
+save_gpkg.Spatial <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  assert_string(new_name, min.chars = 1)
+  assert_string(dir_path, min.chars = 1)
+  if (!new_name %>% is.null()){
+    new_name <- new_name %>%
+      path_ext_remove()
+  }
+
+
+  if (!dir_path %>% dir_exists()){
+    quiet(
+      dir_path %>%
+        dir_create()
+    )
+  }
+  assert_directory_exists(dir_path)
+
+  return(an_area)
+}
 
 #' @export
-save_gpkg.SpatialLines <- function(an_area = NULL, file_name = NULL, file_path = NULL){
+save_gpkg.SpatialLines <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  an_area <- NextMethod(an_area)
+
   an_area <- an_area %>%
     as("SpatialLinesDataFrame")
 
@@ -55,12 +152,33 @@ save_gpkg.SpatialLines <- function(an_area = NULL, file_name = NULL, file_path =
 
   .sp_save_gpkg(
     an_area = an_area %>% as("SpatialLinesDataFrame"),
-    file_name = file_name,
-    file_path = file_path)
+    new_name = new_name,
+    dir_path = dir_path,
+    crs = an_area %>% crs()
+  )
+
+  return(an_area)
 }
 
 #' @export
-save_gpkg.SpatialPolygons <- function(an_area = NULL, file_name = NULL, file_path = NULL){
+save_gpkg.SpatialLinesDataFrame <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  an_area <- an_area %>%
+    save_gpkg.Spatial(new_name, dir_path)
+
+  .sp_save_gpkg(
+    an_area = an_area,
+    new_name = new_name,
+    dir_path = dir_path,
+    crs = an_area %>% crs()
+  )
+
+  return(an_area)
+}
+
+#' @export
+save_gpkg.SpatialPolygons <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  an_area <- NextMethod(an_area)
+
   an_area <- an_area %>%
     as("SpatialPolygonsDataFrame")
 
@@ -70,50 +188,74 @@ save_gpkg.SpatialPolygons <- function(an_area = NULL, file_name = NULL, file_pat
 
   .sp_save_gpkg(
     an_area = an_area %>% as("SpatialPolygonsDataFrame"),
-    file_name = file_name,
-    file_path = file_path)
+    new_name = new_name,
+    dir_path = dir_path,
+    crs = an_area %>% crs()
+  )
+
+  return(an_area)
 }
 
-.sp_save_gpkg <- function(an_area = NULL, file_name = NULL, file_path = NULL){
-  checkmate::assert_class(an_area, "Spatial")
-  checkmate::assert_string(file_name)
+#' @export
+save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+  an_area <- an_area %>%
+    save_gpkg.Spatial(new_name, dir_path)
 
-  if (file_name %>% fs::path_dir() != "."){
-    checkmate::check_null(file_path)
-    file_path <- file_name %>% fs::path_dir()
+  .sp_save_gpkg(
+    an_area = an_area,
+    new_name = new_name,
+    dir_path = dir_path,
+    crs = an_area %>% crs()
+  )
+
+  return(an_area)
+}
+
+
+.sp_save_gpkg <- function(an_area = NULL, new_name = NULL, dir_path = NULL, crs = NULL){
+  assert(
+    check_class(an_area, "SpatialPolygonsDataFrame"),
+    check_class(an_area, "SpatialLinesDataFrame")
+  )
+  assert_string(new_name, min.chars = 1)
+  assert_directory_exists(dir_path)
+  assert(
+    check_class(crs, "CRS"),
+    check_null(crs)
+  )
+  if ("geom" %>% is_in(an_area %>% names())){
+    "A variable name of an_area can not be 'geom'. 'geom' is a reserved word, please change the name of that variable." %>%
+      abort()
   }
-  checkmate::assert_string(file_path)
+  if (crs %>% is.null()){
+    crs <- an_area %>%
+      crs()
+  }
+  if (!an_area %>% compareCRS(crs)){
+    an_area <- an_area %>%
+      spTransform(crs)
+  }
 
-  file_name <- file_name %>%
-    fs::path_file() %>%
-    fs::path_ext_remove() %>%
-    paste0(".gpkg")
+  dsn = ifelse(
+    new_name %>% path_ext() == "",
+    dir_path %>% path(new_name) %>% paste0(".gpkg"),
+    dir_path %>% path(new_name) %>% path_ext_remove() %>% paste0(".gpkg")
+  )
+  layer = new_name %>%
+    path_file() %>%
+    path_ext_remove()
 
-  result = tryCatch({
-    clear_dir <- file_path %>%
-      fs::dir_exists() %>%
-      magrittr::not()
-
-    file_path %>%
-      fs::dir_create(recurse = T)
-
-    an_area %>% rgdal::writeOGR(
-      dsn = file_path %>% fs::path(file_name),
-      layer = file_name %>% fs::path_file() %>% fs::path_ext_remove(),
+  result = quiet(
+    an_area %>% writeOGR(
+      dsn = dsn,
+      layer = layer,
       driver="GPKG",
       overwrite_layer = T
     )
-  }, error = function(e){
-    c(
-      "Error saving file:",
-      paste0(fs::path(file_path, file_name, ".")),
-      e$message
-      ) %>%
-      rlang::abort()
-
-    if (clear_dir){
-      file_path %>%
-        fs::dir_delete()
-    }
-  })
+  )
+  if (result %>% class() == "try-error"){
+    result %>%
+      abort()
+  }
+  return(an_area)
 }

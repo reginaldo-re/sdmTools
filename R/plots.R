@@ -6,9 +6,9 @@
 #' @export
 #' @method plot SDM_area
 plot.SDM_area <- function(x, ...){
-  checkmate::assert(
-    checkmate::check_class(x$study_area, "SpatialPolygons"),
-    checkmate::check_class(x$study_area, "SpatialLines")
+  assert(
+    check_class(x$study_area, "SpatialPolygons"),
+    check_class(x$study_area, "SpatialLines")
   )
   x$study_area %>% plot(...)
 }
@@ -24,7 +24,7 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
     an_area$study_area %>%
       .sp_area_geomap(
         title,
-        subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
+        subtitle = ifelse(crs_subtitle==T, paste0(crs(an_area$study_area)), ""),
         lat,
         long,
         group,
@@ -46,35 +46,35 @@ area_geomap.SDM_area <- function(an_area = NULL, title = "", crs_subtitle = T, l
       sdm_tidy()
   }
 
-  map_tmp <- ggplot2::ggplot(
+  map_tmp <- ggplot(
     data =  map_data,
-    ggplot2::aes_string(
+    aes_string(
       x = long,
       y = lat,
       group = group
     )
   ) +
-    ggplot2::scale_x_continuous(labels = number_format) +
-    ggplot2::scale_y_continuous(labels = number_format) +
-    ggplot2::coord_equal()
+    scale_x_continuous(labels = number_format) +
+    scale_y_continuous(labels = number_format) +
+    coord_equal()
 
 
   if (title != ""){
     map_tmp <- map_tmp +
-      ggplot2::labs(title=title)
+      labs(title=title)
   }
 
   if (subtitle != ""){
     map_tmp <- map_tmp +
-      ggplot2::labs(subtitle = subtitle)
+      labs(subtitle = subtitle)
   }
 
   if (is.na(fill)){
     map_tmp <- map_tmp +
-      ggplot2::geom_polygon(colour = colour, fill = NA)
+      geom_polygon(colour = colour, fill = NA)
   } else {
     map_tmp <- map_tmp +
-      ggplot2::geom_polygon(colour = NA, ggplot2::aes_string(fill = fill))
+      geom_polygon(colour = NA, aes_string(fill = fill))
   }
 
   return(map_tmp)
@@ -92,7 +92,7 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
   geo_map <- an_area$study_area %>%
     .sp_area_geomap(
       title,
-      subtitle = ifelse(crs_subtitle==T, paste0(raster::crs(an_area$study_area)), ""),
+      subtitle = ifelse(crs_subtitle==T, paste0(crs(an_area$study_area)), ""),
       lat,
       long,
       group,
@@ -101,9 +101,9 @@ grid_geomap.SDM_area <- function(an_area = NULL, a_gridded_area = NULL, title = 
     )
   if (!(a_gridded_area %>% is.null())){
     geo_map <- geo_map +
-      ggplot2::geom_polygon(
+      geom_polygon(
         data = sdm_tidy(a_gridded_area),
-        ggplot2::aes(x = long, y = lat, group = group),
+        aes(x = long, y = lat, group = group),
         colour = "#4d4d4d",
         fill = NA
       )

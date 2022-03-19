@@ -1,18 +1,39 @@
 #' @noRd
 #' @keywords internal
 detect_vars <- function(an_area = NULL, var_names = NULL){
+  assert(
+    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
   UseMethod("detect_vars", an_area)
 }
 
 #' @noRd
 #' @keywords internal
 detect_vars.Spatial <- function(an_area = NULL, var_names = NULL){
+  return(list())
+}
+
+#' @noRd
+#' @keywords internal
+detect_vars.SpatialPolygonsDataFrame <- function(an_area = NULL, var_names = NULL){
   return(
     an_area %>%
       names() %>%
       .detect_vars(var_names)
   )
 }
+
+#' @noRd
+#' @keywords internal
+detect_vars.SpatialLinesDataFrame <- function(an_area = NULL, var_names = NULL){
+  return(
+    an_area %>%
+      names() %>%
+      .detect_vars(var_names)
+  )
+}
+
 
 #' @noRd
 #' @keywords internal
@@ -27,19 +48,23 @@ detect_vars.SDM_area <- function(an_area = NULL, var_names = NULL){
 #' @noRd
 #' @keywords internal
 detect_vars.SDM_scenario <- function(an_area = NULL, var_names = NULL){
+  an_area %>%
+    check_scenario()
+
   if (an_area$is_rast){
     return(
       an_area$content %>%
         pluck(1) %>%
-        fs::path_file() %>%
-        fs::path_ext_remove() %>%
+        unlist() %>%
+        path_file() %>%
+        path_ext_remove() %>%
         .detect_vars(var_names)
     )
   } else {
     return(
       an_area$content %>%
         pluck(1) %>%
-        rgdal::readOGR(verbose = F) %>%
+        readOGR(verbose = F) %>%
         names() %>%
         .detect_vars(var_names)
     )
@@ -50,45 +75,58 @@ detect_vars.SDM_scenario <- function(an_area = NULL, var_names = NULL){
 #' @noRd
 #' @keywords internal
 detect_vars.character <- function(an_area = NULL, var_names = NULL){
-  checkmate::assert(
-    checkmate::check_directory_exists(an_area),
-    checkmate::check_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector()),
-    checkmate::check_character(an_area, any.missing = F, all.missing = F, min.len = 1, unique = T)
+  assert(
+    check_directory_exists(an_area),
+    check_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector()),
+    check_character(an_area, any.missing = F, all.missing = F, min.len = 1, unique = T)
   )
 
-  if (checkmate::test_directory_exists(an_area)){
+  if (test_directory_exists(an_area)){
     file_list <- an_area %>%
-      fs::dir_ls(recurse = F, type = "file")
-    checkmate::assert_character(file_list, any.missing = F, all.missing = F, min.len = 1, unique = T)
+      dir_ls(recurse = F, type = "file")
+    assert_character(file_list, any.missing = F, all.missing = F, min.len = 1, unique = T)
 
     file_types <- file_list %>%
-      fs::path_ext() %>%
+      path_ext() %>%
       unique()
-    checkmate::assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
-    checkmate::assert_subset(file_types, as_vector(RAST_FORMATS_EXT), empty.ok = F)
+    assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
+    assert_subset(file_types, as_vector(RAST_FORMATS_EXT), empty.ok = F)
 
     dir_list <- an_area %>%
-      fs::dir_ls(recurse = F, type = "directory")
-    checkmate::assert_character(dir_list, len = 0)
+      dir_ls(recurse = F, type = "directory")
+    assert_character(dir_list, len = 0)
 
     return(
       file_list %>%
-        fs::path_file() %>%
-        fs::path_ext_remove() %>%
+        path_file() %>%
+        path_ext_remove() %>%
         .detect_vars(var_names)
     )
   }
-  else if (checkmate::test_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector())){
+  else if (test_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector())){
     if (an_area %>% length() == 1) {
       return(
         an_area %>%
-          rgdal::readOGR(verbose = F) %>%
+          readOGR(verbose = F) %>%
           names() %>%
           .detect_vars(var_names)
       )
     } else {
       "Only one file is accepted!" %>%
-        rlang::abort()
+        abort()
+    }
+  }
+  else if (test_file_exists(an_area, extension = RAST_FORMATS_EXT %>% as_vector())){
+    if (an_area %>% length() == 1) {
+      return(
+        an_area %>%
+          path_file() %>%
+          path_ext_remove() %>%
+          .detect_vars(var_names)
+      )
+    } else {
+      "Only one file is accepted!" %>%
+        abort()
     }
   }
   else {
@@ -102,18 +140,27 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
 #' @noRd
 #' @keywords internal
 .detect_vars <- function(an_area_names = NULL, var_names = NULL){
-  checkmate::assert(
-    checkmate::check_list(an_area_names, types = "character", any.missing = F, all.missing = F, min.len = 1, unique = T),
-    checkmate::check_character(an_area_names, any.missing = F, all.missing = F, min.len = 1, unique = T)
+  assert(
+    check_list(an_area_names, types = "character", any.missing = F, all.missing = F, unique = T),
+    check_character(an_area_names, any.missing = F, all.missing = F, unique = T)
   )
-  checkmate::assert(
-    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = F, min.len = 1, unique = T),
-    checkmate::check_character(var_names, any.missing = F, all.missing = F, min.len = 1, unique = T)
+  assert(
+    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
+  if(an_area_names %>% length() == 0){
+    return(list())
+  }
+  if (var_names %>% is.null()){
+    return(an_area_names)
+  }
+  if (var_names %>% length() == 0){
+    return(list())
+  }
 
   var_found <- var_names %>%
     map(~
-      ifelse(an_area_names %>% stringr::str_detect(stringr::fixed(.x, ignore_case = T)), .x, "") %>%
+      ifelse(an_area_names %>% str_detect(fixed(.x, ignore_case = T)), .x, "") %>%
       discard(. == "")
     ) %>%
     compact()
@@ -125,7 +172,7 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
 
   if (has_ambiguous_var){
     "At least one variable name is ambiguous. Try to use more specific variable names." %>%
-      rlang::abort()
+      abort()
   }
 
   var_found <- var_found  %>%

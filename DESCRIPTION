@@ -43,4 +43,6 @@ Imports:
     withr,
     parallel,
     doParallel,
-    foreach
+    foreach,
+    waldo,
+    stringi

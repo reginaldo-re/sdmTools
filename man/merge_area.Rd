@@ -8,7 +8,8 @@ merge_area(
   an_area = NULL,
   to_merge_area = NULL,
   var_names = NULL,
-  new_name = F
+  new_name = NULL,
+  dir_path = NULL
 )
 }
 \arguments{

@@ -5,7 +5,7 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
   if (o_file %>% is_null() || shp %>% is_null()){
     if (sp_occurrences %>% names() %>% length() != 3){
       "Both o_file and sp_names must have diffent values then NULL." %>%
-        rlang::abort()
+        abort()
     }
   }
 
@@ -13,11 +13,11 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
     vroom::vroom(show_col_types = F) %>%
     janitor::clean_names() %>%
     janitor::remove_empty(c("rows", "cols")) %>%
-    dplyr::mutate(across(is.character, stringr::str_squish))
+    mutate(across(is.character, str_squish))
 
   if (sp_occurrences %>% names() %>% length() != 3){
     "Occurrences file must be three columns named: species, long, lat." %>%
-      rlang::abort()
+      abort()
   }
 
   sp_column_name <- sp_occurrences %>%
@@ -30,23 +30,24 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
 
   if (!is.null(sp_names)){
     sp_names <- sp_names %>%
-      stringr::str_squish()
+      str_squish()
     sp_occurrences <-  sp_occurrences %>%
-      filter(species %>% magrittr::is_in(sp_names))
+      filter(species %>% is_in(sp_names))
   }
   sp_occurrences %>%
     mutate(across(!species, ~ .x %>%  as.character() %>% as.numeric()))
 
   sp::coordinates(sp_occurrences) <- ~long+lat
   if (is.character(a_crs)){
-    raster::crs(sp_occurrences) <- raster::crs(a_crs)
+    crs(sp_occurrences) <- crs(a_crs)
   } else {
-    raster::crs(sp_occurrences) <- a_crs
+    crs(sp_occurrences) <- a_crs
   }
 
   return(
     sp_occurrences %>%
-      sp::spTransform(raster::crs(shp))
+      crs(shp) %>%
+      spTransform()
   )
 }
 
@@ -54,7 +55,7 @@ occurrences_to_shapefile <- function(o_file = NULL, sp_names = NULL, shp = NULL,
 occurrences_to_pa_shapefile <- function(shp_occ, shp_area, sp_names){
   sp_names <- sp_names %>%
     unlist() %>%
-    stringr::str_squish()
+    str_squish()
 
   pa_matrix <- shp_area@data[, F]
 

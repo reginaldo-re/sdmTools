@@ -51,15 +51,15 @@ sdm_tidy.SpatialPolygonsDataFrame <- function(an_area, region = NULL){
 #' @keywords internal
 .sdm_tidy <- function(an_area, region = NULL) {
   quiet(
-      df_tmp <- an_area %>% broom::tidy()
+      df_tmp <- an_area %>% tidy()
   )
 
   if (!(region %>% is.null())){
     if ((region %in% (an_area %>% names()))){
       df_tmp <- df_tmp %>%
-        dplyr::mutate({{region}} := as.integer(id)) %>%
-        dplyr::select(-id) %>%
-        dplyr::left_join(an_area@data, by=region)
+        mutate({{region}} := as.integer(id)) %>%
+        select(-id) %>%
+        left_join(an_area@data, by=region)
       return(df_tmp)
     }
   }

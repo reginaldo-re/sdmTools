@@ -4,7 +4,7 @@
 quiet <- function (expr) {
   return(
     try(
-      withr::with_options(
+      with_options(
         list(warn=-1),
         {
           withCallingHandlers(
@@ -68,13 +68,13 @@ contains.enumeration <- function(an_enum = NULL, an_item = NULL){
     return(
       an_item %>%
         tolower() %>%
-        map_lgl(~ .x %>% magrittr::is_in(an_enum %>% as_vector() %>% tolower()))
+        map_lgl(~ .x %>% is_in(an_enum %>% as_vector() %>% tolower()))
     )
   } else {
     return(
       an_item %>%
         tolower() %>%
-        magrittr::is_in(an_enum %>% as_vector() %>% tolower())
+        is_in(an_enum %>% as_vector() %>% tolower())
     )
   }
 }

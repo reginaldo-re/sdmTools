@@ -11,7 +11,7 @@
 #' or a path to a file, commonly a shapefile or geopackage, representing the area of study.
 #' @param name A name do describe the study area.
 #' @param epsg_code A valid EPSG code, for example EPSG:4326.
-#' @param a_res A vector containing the resolution of the study area. The format is two numeric values
+#' @param resolution A vector containing the resolution of the study area. The format is two numeric values
 #' (width and height) according to \code{epsg_code} used. So, the numeric values can express different
 #' types of measurement units, for example deegres or meters.
 #' @return An object representing a study area containing a \code{sp} object.
@@ -37,33 +37,39 @@
 #' plot(new_sdm_area)
 #' }
 #'
-sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
-  checkmate::assert_string(name, min.chars = 1)
-  checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  checkmate::assert_number(a_res, lower = 0.0001)
-  checkmate::assert_string(dir_path, min.chars = 1)
-  if(dir_path %>% fs::dir_exists()){
+sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
+  assert(
+    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
+  assert_string(sdm_area_name, min.chars = 1)
+  assert_string(epsg_code, min.chars = 6, fixed = "EPSG:")
+  assert_number(resolution, lower = 0.0001)
+
+  assert_string(dir_path, min.chars = 1)
+  if(dir_path %>% dir_exists()){
     dir_path %>%
-      fs::dir_delete()
+      dir_delete()
   }
   dir_path <- quiet(
     dir_path %>%
-      fs::dir_create()
+      dir_create()
   )
-  checkmate::assert_directory_exists(dir_path)
+  assert_directory_exists(dir_path)
 
   UseMethod("sdm_area", an_area)
 }
 
 #' @export
-sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
-  checkmate::assert_file_exists(an_area)
+sdm_area.character <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
+  assert_file_exists(an_area)
   new_sdm_area <- an_area %>%
-    rgdal::readOGR(verbose = F) %>%
+    readOGR(verbose = F) %>%
     .sp_sdm_area(
-      name = name,
+      sdm_area_name = sdm_area_name,
       epsg_code = epsg_code,
-      a_res = a_res,
+      resolution = resolution,
+      var_names = var_names,
       dir_path = dir_path
     )
 
@@ -71,12 +77,13 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
 }
 
 #' @export
-sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
   new_sdm_area <- an_area %>%
     .sp_sdm_area(
-      name = name,
+      sdm_area_name = sdm_area_name,
       epsg_code = epsg_code,
-      a_res = a_res,
+      resolution = resolution,
+      var_names = var_names,
       dir_path = dir_path
     )
 
@@ -85,31 +92,32 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 
 #' @noRd
 #' @keywords internal
-.sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
-  checkmate::assert(
-    checkmate::check_class(an_area, "SpatialPolygons"),
-    checkmate::check_class(an_area, "SpatialLines"),
+.sp_sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
+  assert(
+    check_class(an_area, "SpatialPolygons"),
+    check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  checkmate::assert_string(name, min.chars = 1)
+  assert_string(sdm_area_name, min.chars = 1)
   epsg_code <- epsg_code %>% toupper()
-  checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  checkmate::assert_number(a_res)
-  checkmate::assert_directory_exists(dir_path)
+  check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
+  assert_number(resolution)
+  check_character(var_names, any.missing = F, all.missing = T, unique = T, min.len = 0, null.ok = T)
+  assert_directory_exists(dir_path)
 
   area_crs <- quiet(
     an_area %>%
-      raster::crs()
+      crs()
   )
 
   if(class(area_crs) == "try-error" || area_crs %>% is.na()){
-    raster::crs(an_area) <- raster::crs("EPSG:4326")
+    crs(an_area) <- crs("EPSG:4326")
   }
 
   crs_result <- quiet(
-    epsg_code %>% raster::crs()
+    epsg_code %>% crs()
   )
-  checkmate::assert_class(crs_result, "CRS", .var.name = "epsg_code")
+  assert_class(crs_result, "CRS", .var.name = "epsg_code")
 
   is_gridded <- quiet(
       an_area %>%
@@ -118,35 +126,78 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 
   if( is_gridded %>% is.na()){
     "An_area object has an invalid CRS!" %>%
-      rlang::abort()
+      abort()
   }
 
   if (is_gridded){
     calculated_res <- an_area %>%
       .get_resolution()
-    checkmate::assert_number(calculated_res)
-    checkmate::assert_number(a_res, lower = calculated_res, upper = calculated_res)
+    assert_number(calculated_res)
+    assert_number(resolution, lower = calculated_res, upper = calculated_res)
   }
+
   an_area <- an_area %>%
-    sp::spTransform(crs_result) %>%
+    spTransform(crs_result) %>%
     .repair_area()
 
+  var_found <- an_area %>%
+    detect_vars(var_names)
+
+  var_not_found <- var_names %>%
+    setdiff(var_found) %>%
+    unlist(recursive = T)
+
+  if (test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+    c(
+      "Variables not found:",
+      var_not_found
+    ) %>%
+      abort()
+  }
+
+  if (an_area %>% class() == "SpatialPolygons"){
+    an_area <- an_area %>%
+      as("SpatialPolygonsDataFrame")
+  } else if (an_area %>% class() == "SpatialLines"){
+    an_area <- an_area %>%
+      as("SpatialLinesDataFrame")
+  }
+  if (var_found %>% length() > 0){
+    an_area@data <- an_area@data %>%
+      select(matches(var_found)) %>%
+      set_names(var_found)
+  } else {
+    an_area@data <- an_area@data %>%
+      select(-(ATTR_CONTROL_NAMES %>% as_vector() %>% any_of()))
+
+    if (an_area %>% is("SpatialPolygons")){
+      an_area@data <- 1:(an_area@polygons %>% length()) %>%
+        as.data.frame() %>%
+        rename(id=".")
+
+    } else if (an_area %>% is("SpatialLines")){
+      an_area@data <- 1:(an_area@lines %>% length()) %>%
+        as.data.frame() %>%
+        rename(id=".")
+    }
+  }
+
   sdm_area_tmp <- list(
-    name = name,
+    sdm_area_name = sdm_area_name,
     crs = crs_result,
     epsg_code = epsg_code,
-    resolution = a_res,
+    resolution = resolution,
     gridded = is_gridded,
     study_area = an_area,
-    scenarios = list()
+    dir_path = dir_path,
+    scenarios = NULL
   )
-
 
   an_area %>%
     save_gpkg(
-      file_name = name %>% snakecase::to_snake_case(),
-      file_path = dir_path)
-
+      new_name = sdm_area_name,
+      dir_path = dir_path
+    )
 
   return(
     structure(
@@ -160,53 +211,36 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 #' @noRd
 #' @keywords internal
 .repair_area <- function(an_area = NULL){
-  checkmate::assert(
-    checkmate::check_class(an_area, "SpatialPolygons"),
-    checkmate::check_class(an_area, "SpatialLines")
+  assert(
+    check_class(an_area, "SpatialPolygons"),
+    check_class(an_area, "SpatialLines")
   )
 
   crs_result <- quiet(
     an_area %>%
-      raster::crs()
+      crs()
   )
-  checkmate::assert_class(crs_result, "CRS", .var.name = "epsg_code")
+  assert_class(crs_result, "CRS", .var.name = "epsg_code")
 
   if (an_area %>% class() == "SpatialPolygons"){
     quiet(
       an_area <- an_area %>%
-        rgeos::gBuffer(byid = TRUE, width = 0)
+        gBuffer(byid = TRUE, width = 0)
     )
   }
   return(an_area)
 }
 
-#' @noRd
-#' @keywords internal
-.guess_file_name <- function(an_area = NULL){
-  checkmate::assert_class(an_area, "SDM_area")
-  return(
-    paste(
-      an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
-      an_area$resolution[1],
-      ifelse(
-        !an_area$epsg_code %>% is.null() && !an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)),
-        an_area$epsg_code,
-        ""
-      )
-    ) %>%
-      snakecase::to_snake_case()
-  )
-}
 
 #' @noRd
 #' @keywords internal
 .is_gridded <- function(an_area){
-  checkmate::check_class(an_area, "Spatial")
+  check_class(an_area, "Spatial")
   if (!an_area %>% is("SpatialPolygonsDataFrame")) {
     return(F)
   }
   res_summ <- an_area %>%
-    raster::area() %>%
+    area() %>%
     summary()
 
   return(res_summ["Median"] == res_summ["Mean"] && (an_area@polygons %>% length() > 1))
@@ -215,12 +249,12 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 #' @noRd
 #' @keywords internal
 .get_resolution <- function(an_area){
-  checkmate::check_class(an_area, "Spatial")
+  check_class(an_area, "Spatial")
   if (an_area %>% .is_gridded()){
     coords <- an_area@polygons %>%
-      magrittr::extract2(1) %>%
+      extract2(1) %>%
       slot("Polygons") %>%
-      magrittr::extract2(1) %>%
+      extract2(1) %>%
       slot(("coords"))
 
     return(abs(coords[1,1] - coords[2,1]))

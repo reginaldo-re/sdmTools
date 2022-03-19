@@ -22,10 +22,10 @@ Creates a hierarchy of scenarios to use with SDM_area
 \examples{
 \dontrun{
 a_dir <- tempdir() \%>\%
- fs::path("scenarios_folder")
+ dir_path("scenarios_folder")
 
 system.file("rast_files", package="sdmTools") \%>\%
- fs::dir_copy(a_dir, overwrite = T)
+ dir_copy(a_dir, overwrite = T)
 tmp_scenario <- a_dir \%>\%
  sdm_scenario()
 }

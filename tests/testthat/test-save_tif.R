@@ -1,77 +1,97 @@
-test_that("Saving a SDM_area to tif file guessing file name.", {
-  withr::with_dir(a_dir <- tempdir(),
-    {
-      a_sdm_area %>%
-        save_tif(file_path = a_dir)
+test_that("Saving a SDM_area to a tif file.", {
+  new_sdm_area <- a_sdm_area %>%
+    save_tif()
 
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test_area_50000_epsg_6933") %>%
-            fs::path("geometriaaproximada.tif")
-          )
-        )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test_area_50000_epsg_6933") %>%
-            fs::path("sigla.tif")
-        )
-      )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test_area_50000_epsg_6933") %>%
-            fs::path("geocodigo.tif")
-        )
-      )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-          fs::path("test_area_50000_epsg_6933") %>%
-            fs::path("nome.tif")
-        )
-      )
-    }
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geometriaaproximada.tif")
   )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("sigla.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geocodigo.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("nome.tif")
+  )
+
+  expect_character(compare(new_sdm_area, a_sdm_area), fixed = "No differences")
 })
 
+test_that("Saving a SDM_area to a tif file giving a different dir_path.", {
+  a_dir <- tempdir() %>%
+    path(stri_rand_strings(1,6))
 
-test_that("Saving a SDM_area to tif file giving a file name.", {
-  withr::with_dir(a_dir <- tempdir(),
-    {
-      a_sdm_area %>%
-        save_tif("test", a_dir)
+  a_dir %>%
+    dir_create()
 
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-          fs::path("test") %>%
-            fs::path("geometriaaproximada.tif")
-        )
-      )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test") %>%
-            fs::path("sigla.tif")
-        )
-      )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test") %>%
-            fs::path("geocodigo.tif")
-        )
-      )
-      expect_true(
-        fs::is_file(
-          fs::path(a_dir) %>%
-            fs::path("test") %>%
-            fs::path("nome.tif")
-        )
-      )
-    }
+  new_sdm_area <- a_sdm_area %>%
+    save_tif(dir_path = a_dir)
+
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geometriaaproximada.tif")
   )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("sigla.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geocodigo.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("nome.tif")
+  )
+  expect_length(compare(new_sdm_area, a_sdm_area), 1)
+
+  a_dir %>%
+    dir_delete()
+})
+
+test_that("Saving a SDM_area to a tif file giving a different dir_path and a different file name.", {
+  a_dir <- tempdir() %>%
+    path(stri_rand_strings(1,6))
+
+  new_sdm_area <- a_sdm_area %>%
+    save_tif("test", a_dir)
+
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geometriaaproximada.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("sigla.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("geocodigo.tif")
+  )
+  expect_file_exists(
+    path(new_sdm_area$dir_path) %>%
+      path(new_sdm_area$sdm_area_name) %>%
+      path("nome.tif")
+  )
+  expect_length(compare(new_sdm_area, a_sdm_area), 2)
+
+  a_dir %>%
+    dir_delete()
 })
 
