@@ -34,53 +34,87 @@
 #'
 #' plot(gridded_area)
 #' }
-make_grid <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
+make_grid <- function(an_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+  checkmate::assert(
+    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
+  checkmate::assert_string(new_name, min.chars = 1, null.ok = T)
+  checkmate::assert_string(dir_path, min.chars = 1, null.ok = T)
+
   UseMethod("make_grid", an_area)
 }
 
 #' @export
-make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, centroid = T){
+make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
   checkmate::assert(
     checkmate::check_class(an_area$study_area, "SpatialPolygons"),
     checkmate::check_class(an_area$study_area, "SpatialLines")
   )
+
   if (an_area$gridded){
     "Nothing to do, the grid over study area already exists." %>%
       rlang::warn()
     return(an_area)
   }
-  checkmate::assert(
-    checkmate::check_string(new_name),
-    checkmate::check_logical(new_name, len = 1)
-  )
+
+  an_area$gridded <- T
+  if (!new_name %>% is.null()){
+    an_area$sdm_area_name <- new_name
+  }
 
   if (an_area$study_area %>% is("SpatialPolygons")){
     an_area$study_area <- an_area$study_area %>%
       .make_grid_SpatialPolygons(
-        a_res = an_area$resolution,
         var_names = var_names,
-        new_name = new_name,
-        centroid = centroid
+        resolution = an_area$resolution
       )
   } else if (an_area$study_area %>% is("SpatialLines")){
     an_area$study_area <- an_area$study_area %>%
       .make_grid_SpatialLines(
-        a_res = an_area$resolution[[1]],
         var_names = var_names,
-        new_name = new_name,
-        centroid = centroid
+        resolution = an_area$resolution
       )
   }
 
-  an_area$gridded <- T
+  if (dir_path %>% is.null()){
+    tmp_dir_path <- tempdir() %>%
+      fs::path(stringi::stri_rand_strings(1,6))
+    quiet(
+      tmp_dir_path %>%
+        fs::dir_create()
+    )
+    checkmate::assert_directory_exists(tmp_dir_path)
 
-  if (checkmate::test_logical(new_name, min.len = 1)){
-    if (new_name) {
-      an_area$name <- an_area$name %>%
-        paste0("_grid")
+    if (an_area$dir_path %>% fs::dir_exists()){
+      an_area$dir_path %>%
+        fs::dir_delete()
     }
-  } else if (checkmate::test_string(new_name)){
-    an_area$name <- new_name
+    quiet(
+      an_area$dir_path %>%
+        fs::dir_create()
+    )
+    checkmate::assert_directory_exists(an_area$dir_path)
+
+    an_area %>%
+      save_gpkg()
+
+    tmp_dir_path %>%
+      fs::dir_copy(an_area$dir_path, overwrite = T)
+    tmp_dir_path %>%
+      fs::dir_delete()
+  } else {
+    an_area$dir_path <- dir_path
+    if (an_area$dir_path %>% fs::dir_exists()){
+      an_area$dir_path %>%
+        fs::dir_delete()
+    }
+    quiet(
+      an_area$dir_path %>%
+        fs::dir_create()
+    )
+    an_area %>%
+      save_gpkg()
   }
 
   return(an_area)
@@ -88,7 +122,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
 
 #' @noRd
 #' @keywords internal
-.make_grid_SpatialPolygons <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+.make_grid_SpatialPolygons <- function(an_area = NULL, var_names = NULL, resolution = NULL){
   checkmate::assert_class(an_area, "SpatialPolygons")
 
   an_area <- an_area %>%
@@ -101,9 +135,8 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
   return(
     an_area %>%
       .sp_make_grid(
-        a_res = a_res,
-        var_names = var_names,
-        centroid = centroid
+        resolution = resolution,
+        var_names = var_names
       )
   )
 }
@@ -111,7 +144,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
 
 #' @noRd
 #' @keywords internal
-.make_grid_SpatialLines <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+.make_grid_SpatialLines <- function(an_area = NULL, var_names = NULL, resolution = NULL){
   checkmate::check_class(an_area, "SpatialLines")
 
   an_area <- an_area %>%
@@ -134,32 +167,56 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
   return(
     an_area %>%
       .sp_make_grid(
-        a_res = a_res,
-        var_names = var_names,
-        new_name = new_name,
-        centroid = centroid
+        resolution =  resolution,
+        var_names = var_names
       )
   )
 }
 
 #' @noRd
 #' @keywords internal
-.sp_make_grid <- function(an_area = NULL, a_res = NULL, var_names = NULL, new_name = F, centroid=T){
+.sp_make_grid <- function(an_area = NULL, var_names = NULL, resolution = NULL){
   grid_cell_id <- value <- x <- y <- NULL
+
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  checkmate::assert_number(a_res, lower = 0.0001)
+  checkmate::assert_number(resolution, lower = 0.0001)
   checkmate::assert(
-    checkmate::check_null(var_names),
-    checkmate::check_list(var_names, unique = T)
+    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
-  checkmate::check_logical(centroid, len = 1)
 
-  an_area@data <- an_area@data %>%
-    .select_vars(var_names)
+  var_found <- an_area %>%
+    detect_vars(var_names)
+
+  var_not_found <- var_names %>%
+    setdiff(var_found)
+
+  if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+    c(
+      "Variables not found:",
+      var_not_found
+    ) %>%
+      rlang::abort()
+  }
+
+
+  if (var_found %>% length() > 0){
+    if (!ATTR_CONTROL_NAMES$cell_id %>% magrittr::is_in(var_found)){
+      var_found <- c(ATTR_CONTROL_NAMES$cell_id, var_found)
+    }
+
+    an_area@data <- an_area@data %>%
+      dplyr::select(tidyselect::matches(var_found)) %>%
+      magrittr::set_names(var_found)
+  } else{
+    an_area@data <- an_area@data %>%
+      dplyr::select(ATTR_CONTROL_NAMES$cell_id)
+  }
+
 
   shp_area_bkp <- an_area
 
@@ -167,7 +224,10 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
     paste0(".gpkg")
 
   an_area %>%
-    save_gpkg(shp_tmp_file)
+    save_gpkg(
+      new_name = shp_tmp_file %>% fs::path_file(),
+      dir_path = shp_tmp_file %>% fs::path_dir()
+    )
 
   raster_tmp_file <- tempfile() %>%
     paste0(".tif")
@@ -189,7 +249,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
     at = T,
     co = c("BIGTIFF=YES"),
     a_nodata = "-9999.0",
-    tr = c(a_res, a_res),
+    tr = c(resolution, resolution),
     tap = T,
     ot = 'Float32',
     output_Raster = T,
@@ -227,15 +287,13 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = F, c
 
   an_area <- shp_grid
 
-  if (centroid){
-    centroids <- an_area %>%
-      rgeos::gCentroid(byid = TRUE)
+  centroids <- an_area %>%
+    rgeos::gCentroid(byid = TRUE)
 
-    an_area@data <- an_area@data %>%
-      dplyr::bind_cols(centroids@coords %>% as.data.frame()) %>%
-      dplyr::rename(!!ATTR_CONTROL_NAMES$x_centroid := x, !!ATTR_CONTROL_NAMES$y_centroid := y)
+  an_area@data <- an_area@data %>%
+    dplyr::bind_cols(centroids@coords %>% as.data.frame()) %>%
+    dplyr::rename(!!ATTR_CONTROL_NAMES$x_centroid := x, !!ATTR_CONTROL_NAMES$y_centroid := y)
 
-  }
   return(an_area)
 }
 

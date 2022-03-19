@@ -4,7 +4,7 @@
 \alias{save_gpkg}
 \title{Save the vector format geospatial object of the \code{SDM_area} to a geopackage file.}
 \usage{
-save_gpkg(an_area, file_name, file_path)
+save_gpkg(an_area = NULL, new_name = NULL, dir_path = NULL)
 }
 \arguments{
 \item{an_area}{A \code{SDM_area} object representing the area of the study.}

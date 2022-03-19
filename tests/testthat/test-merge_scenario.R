@@ -1,7 +1,9 @@
 test_that("Merge scenario folder containing a single raster.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -38,9 +40,11 @@ test_that("Merge scenario folder containing a single raster.", {
 })
 
 test_that("Scenario folder containing an hierarchy scenarios.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -125,9 +129,11 @@ test_that("Scenario folder containing an hierarchy scenarios.", {
 
 
 test_that("Scenario folder containing an hierarchy vector scenarios.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -202,9 +208,11 @@ test_that("Scenario folder containing an hierarchy vector scenarios.", {
 })
 
 test_that("Scenario folder containing an hierarchy vector scenarios.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%

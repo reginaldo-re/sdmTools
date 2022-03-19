@@ -4,7 +4,7 @@
 \alias{make_grid}
 \title{Make a grid over a study area.}
 \usage{
-make_grid(an_area = NULL, var_names = NULL, new_name = F, centroid = T)
+make_grid(an_area = NULL, var_names = NULL, new_name = F)
 }
 \arguments{
 \item{an_area}{A \code{SDM_area} object representing the area of the study.}

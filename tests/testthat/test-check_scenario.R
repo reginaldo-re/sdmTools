@@ -1,8 +1,10 @@
 describe("Given the folder containing inner files and a inner folder in same hierarchy level", {
   it("When cheking the validity of that scenario folder, then I expect an error.", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%
@@ -28,9 +30,11 @@ describe("Given the folder containing inner files and a inner folder in same hie
 
 describe("Given the folder containing a mix of raster an vect files", {
   it("When cheking the validity of that scenario folder, then I expect an error.", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%
@@ -56,9 +60,11 @@ describe("Given the folder containing a mix of raster an vect files", {
 
 describe("Given the empty folder", {
   it("When cheking the validity of that scenario folder, then I expect an error.", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%
@@ -78,9 +84,11 @@ describe("Given the empty folder", {
 
 describe("Given the raster files containing incosistent layers", {
   it("When cheking the validity of that scenario folder, then I expect an error.", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%
@@ -116,9 +124,11 @@ describe("Given the raster files containing incosistent layers", {
 
 describe("Given the correct hierarchy of raster files", {
   it("When cheking the validity of that scenario folder, then I expect a valid scenario (TRUE).", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%
@@ -148,9 +158,11 @@ describe("Given the correct hierarchy of raster files", {
 
 describe("Given the correct hierarchy of vect files", {
   it("When cheking the validity of that scenario folder, then I expect a valid scenario (TRUE).", {
-    withr::with_dir(
-      a_dir <- tempdir(),
-      {
+    a_dir <- tempdir()
+    withr::with_tempdir(
+      tmpdir = a_dir,
+      clean = T,
+      code = {
         a_dir <- a_dir %>% fs::path("scenarios_folder")
         if (a_dir %>% fs::is_dir()){
           a_dir %>%

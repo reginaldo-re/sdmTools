@@ -1,6 +1,10 @@
 #' @noRd
 #' @keywords internal
 detect_vars <- function(an_area = NULL, var_names = NULL){
+  checkmate::assert(
+    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
   UseMethod("detect_vars", an_area)
 }
 
@@ -27,6 +31,9 @@ detect_vars.SDM_area <- function(an_area = NULL, var_names = NULL){
 #' @noRd
 #' @keywords internal
 detect_vars.SDM_scenario <- function(an_area = NULL, var_names = NULL){
+  an_area %>%
+    check_scenario()
+
   if (an_area$is_rast){
     return(
       an_area$content %>%
@@ -103,13 +110,22 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
 #' @keywords internal
 .detect_vars <- function(an_area_names = NULL, var_names = NULL){
   checkmate::assert(
-    checkmate::check_list(an_area_names, types = "character", any.missing = F, all.missing = F, min.len = 1, unique = T),
-    checkmate::check_character(an_area_names, any.missing = F, all.missing = F, min.len = 1, unique = T)
+    checkmate::check_list(an_area_names, types = "character", any.missing = F, all.missing = F, unique = T),
+    checkmate::check_character(an_area_names, any.missing = F, all.missing = F, unique = T)
   )
   checkmate::assert(
-    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = F, min.len = 1, unique = T),
-    checkmate::check_character(var_names, any.missing = F, all.missing = F, min.len = 1, unique = T)
+    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
+  if(an_area_names %>% length() == 0){
+    return(list())
+  }
+  if (var_names %>% is.null()){
+    return(an_area_names)
+  }
+  if (var_names %>% length() == 0){
+    return(list())
+  }
 
   var_found <- var_names %>%
     map(~

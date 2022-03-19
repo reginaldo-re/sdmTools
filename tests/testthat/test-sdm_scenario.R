@@ -1,7 +1,9 @@
 test_that("Scenario folder is invalid: contains a non hierarchy of files and folders.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -25,9 +27,11 @@ test_that("Scenario folder is invalid: contains a non hierarchy of files and fol
 })
 
 test_that("Scenario folder is invalid: contains a mix of non raster and vect files.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -52,9 +56,11 @@ test_that("Scenario folder is invalid: contains a mix of non raster and vect fil
 
 
 test_that("Scenario folder containing a single raster but no variable names.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -76,9 +82,11 @@ test_that("Scenario folder containing a single raster but no variable names.", {
 })
 
 test_that("Scenario folder with one invalid named raster variables.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -103,9 +111,11 @@ test_that("Scenario folder with one invalid named raster variables.", {
 
 
 test_that("Scenario folder containing a single raster.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -128,9 +138,11 @@ test_that("Scenario folder containing a single raster.", {
 })
 
 test_that("Scenario folder containing a correct hierarchy of raster files.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -163,9 +175,11 @@ test_that("Scenario folder containing a correct hierarchy of raster files.", {
 
 
 test_that("Scenario folder with only one named raster variables", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -194,9 +208,11 @@ test_that("Scenario folder with only one named raster variables", {
 
 
 test_that("Scenario folder containing a hierarchy vector scenarios.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -242,9 +258,11 @@ test_that("Scenario folder containing a hierarchy vector scenarios.", {
 })
 
 test_that("Scenario folder containing a hierarchy vector scenarios and single variable.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%
@@ -292,9 +310,11 @@ test_that("Scenario folder containing a hierarchy vector scenarios and single va
 
 
 test_that("Scenario folder containing a hierarchy vector scenarios and invalid variables.", {
-  withr::with_dir(
-    a_dir <- tempdir(),
-    {
+  a_dir <- tempdir()
+  withr::with_tempdir(
+    tmpdir = a_dir,
+    clean = T,
+    code = {
       a_dir <- a_dir %>% fs::path("scenarios_folder")
       if (a_dir %>% fs::is_dir()){
         a_dir %>%

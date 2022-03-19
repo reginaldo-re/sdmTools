@@ -11,7 +11,7 @@
 #' or a path to a file, commonly a shapefile or geopackage, representing the area of study.
 #' @param name A name do describe the study area.
 #' @param epsg_code A valid EPSG code, for example EPSG:4326.
-#' @param a_res A vector containing the resolution of the study area. The format is two numeric values
+#' @param resolution A vector containing the resolution of the study area. The format is two numeric values
 #' (width and height) according to \code{epsg_code} used. So, the numeric values can express different
 #' types of measurement units, for example deegres or meters.
 #' @return An object representing a study area containing a \code{sp} object.
@@ -37,10 +37,15 @@
 #' plot(new_sdm_area)
 #' }
 #'
-sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
-  checkmate::assert_string(name, min.chars = 1)
+sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
+  checkmate::assert(
+    checkmate::check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
+    checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+  )
+  checkmate::assert_string(sdm_area_name, min.chars = 1)
   checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  checkmate::assert_number(a_res, lower = 0.0001)
+  checkmate::assert_number(resolution, lower = 0.0001)
+
   checkmate::assert_string(dir_path, min.chars = 1)
   if(dir_path %>% fs::dir_exists()){
     dir_path %>%
@@ -56,14 +61,15 @@ sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL
 }
 
 #' @export
-sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+sdm_area.character <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
   checkmate::assert_file_exists(an_area)
   new_sdm_area <- an_area %>%
     rgdal::readOGR(verbose = F) %>%
     .sp_sdm_area(
-      name = name,
+      sdm_area_name = sdm_area_name,
       epsg_code = epsg_code,
-      a_res = a_res,
+      resolution = resolution,
+      var_names = var_names,
       dir_path = dir_path
     )
 
@@ -71,12 +77,13 @@ sdm_area.character <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_
 }
 
 #' @export
-sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
   new_sdm_area <- an_area %>%
     .sp_sdm_area(
-      name = name,
+      sdm_area_name = sdm_area_name,
       epsg_code = epsg_code,
-      a_res = a_res,
+      resolution = resolution,
+      var_names = var_names,
       dir_path = dir_path
     )
 
@@ -85,16 +92,17 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
 
 #' @noRd
 #' @keywords internal
-.sp_sdm_area <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_res = NULL, dir_path = NULL){
+.sp_sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
   checkmate::assert(
     checkmate::check_class(an_area, "SpatialPolygons"),
     checkmate::check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  checkmate::assert_string(name, min.chars = 1)
+  checkmate::assert_string(sdm_area_name, min.chars = 1)
   epsg_code <- epsg_code %>% toupper()
   checkmate::check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  checkmate::assert_number(a_res)
+  checkmate::assert_number(resolution)
+  checkmate::check_character(var_names, any.missing = F, all.missing = T, unique = T, min.len = 0, null.ok = T)
   checkmate::assert_directory_exists(dir_path)
 
   area_crs <- quiet(
@@ -125,28 +133,54 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
     calculated_res <- an_area %>%
       .get_resolution()
     checkmate::assert_number(calculated_res)
-    checkmate::assert_number(a_res, lower = calculated_res, upper = calculated_res)
+    checkmate::assert_number(resolution, lower = calculated_res, upper = calculated_res)
   }
+
   an_area <- an_area %>%
     sp::spTransform(crs_result) %>%
     .repair_area()
 
+  var_found <- an_area %>%
+    detect_vars(var_names)
+
+  var_not_found <- var_names %>%
+    setdiff(var_found)
+
+  if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
+    c(
+      "Variables not found:",
+      var_not_found
+    ) %>%
+      rlang::abort()
+  }
+
+  if ((an_area %>% is("SpatialPolygonsDataFrame") || an_area %>% is("SpatialLinesDataFrame"))){
+    if (var_found %>% length() > 0){
+      an_area@data <- an_area@data %>%
+        dplyr::select(tidyselect::matches(var_found)) %>%
+        magrittr::set_names(var_found)
+    } else{
+      an_area@data <- an_area@data %>%
+        dplyr::select(-(an_area@data %>% names()))
+    }
+  }
+
   sdm_area_tmp <- list(
-    name = name,
+    sdm_area_name = sdm_area_name,
     crs = crs_result,
     epsg_code = epsg_code,
-    resolution = a_res,
+    resolution = resolution,
     gridded = is_gridded,
     study_area = an_area,
+    dir_path = dir_path,
     scenarios = list()
   )
 
-
   an_area %>%
     save_gpkg(
-      file_name = name %>% snakecase::to_snake_case(),
-      file_path = dir_path)
-
+      new_name = sdm_area_name,
+      dir_path = dir_path
+    )
 
   return(
     structure(
@@ -180,23 +214,6 @@ sdm_area.Spatial <- function(an_area = NULL, name = NULL, epsg_code = NULL, a_re
   return(an_area)
 }
 
-#' @noRd
-#' @keywords internal
-.guess_file_name <- function(an_area = NULL){
-  checkmate::assert_class(an_area, "SDM_area")
-  return(
-    paste(
-      an_area$name %>% fs::path_file() %>%  fs::path_ext_remove(),
-      an_area$resolution[1],
-      ifelse(
-        !an_area$epsg_code %>% is.null() && !an_area$name %>% stringr::str_detect(stringr::fixed(an_area$epsg_code)),
-        an_area$epsg_code,
-        ""
-      )
-    ) %>%
-      snakecase::to_snake_case()
-  )
-}
 
 #' @noRd
 #' @keywords internal

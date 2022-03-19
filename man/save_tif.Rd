@@ -4,17 +4,17 @@
 \alias{save_tif}
 \title{Save the vector format geospatial object of the \code{SDM_area} to a raster tif file.}
 \usage{
-save_tif(an_area, file_name, file_path)
+save_tif(an_area = NULL, new_name = NULL, dir_path = NULL)
 }
 \arguments{
 \item{an_area}{A \code{SDM_area} object representing the area of the study.}
 
-\item{file_name}{The name of file which the \code{sp} object will be saved.
-The \code{file_name} will be prepended to each attribute name of the \code{sp} object.
-If the \code{file_name} parameter is equal to NULL, it is replaced by
+\item{new_name}{The name of file which the \code{sp} object will be saved.
+The \code{new_name} will be prepended to each attribute name of the \code{sp} object.
+If the \code{new_name} parameter is equal to NULL, it is replaced by
 a name computed based on attributes of the \code{SDM_area} object.}
 
-\item{file_path}{The path in which the file will be saved.}
+\item{dir_path}{The path in which the file will be saved.}
 }
 \description{
 Save the vector format geospatial object of the \code{SDM_area} to a raster tif file.
@@ -34,6 +34,6 @@ gridded_area <- SPDF \%>\%
 tmp_dir <- tempdir()
 
 gridded_area \%>\%
-   save_tif(file_path = tmp_dir)
+   save_tif(dir_path = tmp_dir)
 }
 }

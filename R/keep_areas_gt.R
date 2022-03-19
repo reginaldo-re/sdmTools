@@ -30,44 +30,50 @@
 #'     "EPSG:6933",
 #'     c(50000, 50000)
 #'  ) %>%
-#'  areas_gt(
+#'  keep_areas_gt(
 #'     0.25,
 #'     new_name = "Removing a single area from a SpatialPolygons study area."
 #'  )
 #'
 #' plot(new_area$study_area)
 #' }
-areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = F){
-  UseMethod("areas_gt")
-}
+keep_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = NULL, dir_path = NULL){
+  checkmate::assert_class(an_area$study_area, "SpatialPolygons")
+  checkmate::assert_string(new_name, min.chars = 1, null.ok = T)
+  checkmate::assert_string(dir_path, min.chars = 1, null.ok = T)
 
-#' @export
-areas_gt.SDM_area <- function(an_area = NULL, lower_bound = 0, new_name = F) {
-  checkmate::check_class(an_area$study_area, "SpatialPolygons")
+  if (!new_name %>% is.null()){
+    an_area$name <- new_name %>%
+      snakecase::to_snake_case()
+  }
+  if (!dir_path %>% is.null()){
+    an_area$dir_path <- an_area$dir_path
+  }
+  new_name <- an_area$name
+  dir_path <- an_area$dir_path
 
-  checkmate::assert(
-    checkmate::check_string(new_name),
-    checkmate::check_logical(new_name, len = 1)
+  if(dir_path %>% fs::dir_exists()){
+    dir_path %>%
+      fs::dir_delete()
+  }
+  quiet(
+    dir_path %>%
+      fs::dir_create()
   )
+  checkmate::assert_directory_exists(dir_path)
 
   an_area$study_area <- an_area$study_area %>%
-    .sp_areas_gt(lower_bound)
+    .sp_keep_areas_gt(lower_bound)
 
-  if (checkmate::test_logical(new_name, min.len = 1)){
-    if (new_name) {
-      an_area$name <- an_area$name %>%
-        paste0("_drop")
-    }
-  } else if (checkmate::test_string(new_name)){
-    an_area$name <- new_name
-  }
+  an_area %>%
+    save_gpkg()
 
   return(an_area)
 }
 
 #' @noRd
 #' @keywords internal
-.sp_areas_gt <- function(an_area = NULL, lower_bound = 0) {
+.sp_keep_areas_gt <- function(an_area = NULL, lower_bound = 0) {
   checkmate::check_class(an_area, "SpatialPolygons")
   checkmate::assert_numeric(lower_bound, len = 1, lower = 0.0)
 

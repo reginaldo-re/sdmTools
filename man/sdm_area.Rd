@@ -6,9 +6,10 @@
 \usage{
 sdm_area(
   an_area = NULL,
-  name = NULL,
+  sdm_area_name = NULL,
   epsg_code = NULL,
-  a_res = NULL,
+  resolution = NULL,
+  var_names = NULL,
   dir_path = NULL
 )
 }
@@ -16,13 +17,13 @@ sdm_area(
 \item{an_area}{An object of package \code{sp} (\url{https://cran.r-project.org/web/packages/sp})
 or a path to a file, commonly a shapefile or geopackage, representing the area of study.}
 
-\item{name}{A name do describe the study area.}
-
 \item{epsg_code}{A valid EPSG code, for example EPSG:4326.}
 
-\item{a_res}{A vector containing the resolution of the study area. The format is two numeric values
+\item{resolution}{A vector containing the resolution of the study area. The format is two numeric values
 (width and height) according to \code{epsg_code} used. So, the numeric values can express different
 types of measurement units, for example deegres or meters.}
+
+\item{name}{A name do describe the study area.}
 }
 \value{
 An object representing a study area containing a \code{sp} object.

@@ -66,7 +66,12 @@ SPDF <- rgdal::readOGR(system.file("vect_files/brasil_uf.gpkg", package="sdmTool
 SLDF <- rgdal::readOGR(system.file("vect_files/hydro_uper_prpy.gpkg", package="sdmTools"), layer = "hydro_uper_prpy", verbose = F)
 
 a_sdm_area <- SPDF %>%
- sdm_area("Test area", "EPSG:6933", 50000, dir_path = "/tmp/setup_test")
+  sdm_area(
+    sdm_area_name = "Test area",
+    epsg_code = "EPSG:6933",
+    resolution = 50000,
+    dir_path = "/tmp/setup_test"
+  )
 
 
 a_sdm_area_gridded_area <- a_sdm_area %>%

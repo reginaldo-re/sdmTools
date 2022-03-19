@@ -107,7 +107,8 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
 
     #var_not_found <- var_names %>%
     #  extract(!var_names %>% magrittr::is_in(var_found))
-    var_not_found <- var_names %>% setdiff(var_found)
+    var_not_found <- var_names %>%
+      setdiff(var_found)
 
     if (checkmate::test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
       c(
