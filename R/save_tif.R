@@ -45,7 +45,7 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
 
   if (dir_path %>% is.null()){
     tmp_dir_path <- tempdir() %>%
-      path(stringi::stri_rand_strings(1,6))
+      path(stri_rand_strings(1,6))
     quiet(
       tmp_dir_path %>%
         path(an_area$sdm_area_name) %>%
