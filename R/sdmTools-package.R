@@ -38,9 +38,38 @@
 #' @importFrom stringi stri_rand_strings
 "_PACKAGE"
 
+utils::globalVariables(
+  c(
+    ".",
+    "dummy",
+    "cell_id",
+    "x_centroid",
+    "y_centroid",
+    "grd",
+    "asc",
+    "sdat",
+    "rst",
+    "nc",
+    "tif",
+    "envi",
+    "bil",
+    "img",
+    "svg",
+    "gpkg",
+    "long",
+    "lat",
+    "group",
+    "comma",
+    "species",
+    "presence"
+  )
+)
+
 ## usethis namespace: start
 #' @importFrom glue glue
 #' @importFrom lifecycle deprecated
 ## usethis namespace: end
 NULL
+
+
 
