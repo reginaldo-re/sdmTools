@@ -20,7 +20,10 @@
 #'  sdm_scenario()
 #' }
 sdm_scenario <- function(a_scenario = NULL, var_names = NULL){
-  assert_directory_exists(a_scenario)
+  a_scenario %>%
+    assert_directory_exists(
+      msg = "A scenario (a_scenario) must be a valid directory where data is stored."
+    )
   assert(
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
@@ -48,9 +51,27 @@ sdm_scenario.character <- function(a_scenario = NULL, var_names = NULL){
     dir_ls(recurse = T, type = "file") %>%
     path_ext() %>%
     unique()
-  assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
-  assert_subset(file_types, c(as_vector(RAST_FORMATS_EXT), as_vector(VECT_FORMATS_EXT)), empty.ok = F)
-  assert_true(check_scenario(a_scenario))
+
+  file_types %>%
+    length() %>%
+    assert_int(
+      lower = 1,
+      upper = 1,
+      msg = "There must be only one valid file type, or raster or vect, in the scenario (a_scenario)."
+    )
+
+  file_types %>%
+    assert_subset(
+        choices = c(as_vector(RAST_FORMATS_EXT), as_vector(VECT_FORMATS_EXT)),
+        empty.ok = F,
+        msg = "The file type encountered in the scenario (a_scenario) must be a valid raster or vect format."
+      )
+
+  a_scenario %>%
+    check_scenario() %>%
+    assert_true(
+      msg = "The informed scenario (a_scenario) must be a valid hierarchy of directories and files forming a balanced tree."
+    )
 
   tmp_content <- NULL
   if (RAST_FORMATS_EXT %>% contains(file_types)){

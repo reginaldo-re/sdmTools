@@ -38,7 +38,11 @@
 #' plot(new_area$study_area)
 #' }
 keep_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = NULL, dir_path = NULL){
-  assert_class(an_area$study_area, "SpatialPolygons")
+  an_area$study_area %>%
+    assert_class(
+      classes = "SpatialPolygons",
+      msg = "A modeling area (an_area$study_area) must be an object of SpatialPolygons* class."
+    )
   assert_string(new_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
@@ -60,7 +64,11 @@ keep_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = NULL, dir_
     dir_path %>%
       dir_create()
   )
-  assert_directory_exists(dir_path)
+  dir_path %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
+
 
   an_area$study_area <- an_area$study_area %>%
     .sp_keep_areas_gt(lower_bound)
@@ -74,8 +82,17 @@ keep_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = NULL, dir_
 #' @noRd
 #' @keywords internal
 .sp_keep_areas_gt <- function(an_area = NULL, lower_bound = 0) {
-  check_class(an_area, "SpatialPolygons")
-  assert_numeric(lower_bound, len = 1, lower = 0.0)
+  an_area %>%
+    assert_class(
+      classes = "SpatialPolygons",
+      msg = "A modeling area (an_area) must be an object of SpatialPolygons* class."
+    )
+
+  lower_bound %>%
+    assert_number(
+      lower = 0.0,
+      msg = "The lower bound (lower_bound) must be informed."
+    )
 
   an_area <- an_area %>%
     .repair_area()

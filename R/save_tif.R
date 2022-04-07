@@ -69,7 +69,11 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
         path(an_area$sdm_area_name) %>%
         dir_create()
     )
-    assert_directory_exists(an_area$dir_path)
+
+    an_area$dir_path %>%
+      assert_directory_exists(
+        msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+      )
     tmp_dir_path %>%
       dir_copy(an_area$dir_path, overwrite = T)
 
@@ -100,11 +104,32 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
 #' @noRd
 #' @keywords internal
 .sp_save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL, crs = NULL, resolution = NULL){
-  assert_class(an_area, "SpatialPolygons")
-  assert_string(new_name, min.chars = 1)
-  assert_directory_exists(dir_path %>% path(new_name))
-  assert_class(crs, "CRS")
-  assert_number(resolution, lower = 0.0001)
+  an_area %>%
+    assert_class(
+      classes = "SpatialPolygons",
+      msg = "A modeling area (an_area) must be an object of SpatialPolygons* class."
+    )
+
+  new_name %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a name (new_name)."
+    )
+  dir_path %>%
+    path(new_name) %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path %>% path(new_name)). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
+  crs %>%
+    assert_class(
+      classes = "CRS",
+      msg = "A modeling area (an_area) must have a valid CRS."
+    )
+  resolution %>%
+    assert_number(
+      lower = 0.0001,
+      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+    )
 
   tmp_raster <- raster(
     crs = crs,

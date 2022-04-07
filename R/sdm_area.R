@@ -42,11 +42,28 @@ sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
-  assert_string(sdm_area_name, min.chars = 1)
-  assert_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  assert_number(resolution, lower = 0.0001)
+  sdm_area_name %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a name (sdm_area_name)."
+    )
+  epsg_code %>%
+    assert_string(
+      min.chars = 6,
+      fixed = "EPSG:",
+      msg = "A modeling area (an_area) must have a valid EPSG code (epsg_code) starting with 'EPSG:', for example EPSG:6933."
+    )
+  resolution %>%
+    assert_number(
+      lower = 0.0001,
+      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+    )
+  dir_path %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
 
-  assert_string(dir_path, min.chars = 1)
   if(dir_path %>% dir_exists()){
     dir_path %>%
       dir_delete()
@@ -55,7 +72,10 @@ sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir
     dir_path %>%
       dir_create()
   )
-  assert_directory_exists(dir_path)
+  dir_path %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
 
   UseMethod("sdm_area", an_area)
 }
@@ -98,12 +118,28 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
     check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  assert_string(sdm_area_name, min.chars = 1)
+  sdm_area_name %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a name (sdm_area_name)."
+    )
   epsg_code <- epsg_code %>% toupper()
-  check_string(epsg_code, min.chars = 6, fixed = "EPSG:")
-  assert_number(resolution)
-  check_character(var_names, any.missing = F, all.missing = T, unique = T, min.len = 0, null.ok = T)
-  assert_directory_exists(dir_path)
+  epsg_code %>%
+    assert_string(
+      min.chars = 6,
+      fixed = "EPSG:",
+      msg = "A modeling area (an_area) must have a valid EPSG code (epsg_code) starting with 'EPSG:', for example EPSG:6933."
+    )
+  resolution %>%
+    assert_number(
+      lower = 0.0001,
+      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+    )
+  assert_character(var_names, any.missing = F, all.missing = T, unique = T, min.len = 0, null.ok = T)
+  dir_path %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
 
   area_crs <- quiet(
     an_area %>%
@@ -117,7 +153,11 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
   crs_result <- quiet(
     epsg_code %>% crs()
   )
-  assert_class(crs_result, "CRS", .var.name = "epsg_code")
+  crs_result %>%
+    assert_class(
+      classes = "CRS",
+      msg = "A modeling area (an_area) must have a valid EPSG code (epsg_code) starting with 'EPSG:', for example EPSG:6933."
+    )
 
   is_gridded <- quiet(
       an_area %>%
@@ -132,8 +172,14 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
   if (is_gridded){
     calculated_res <- an_area %>%
       .get_resolution()
-    assert_number(calculated_res)
-    assert_number(resolution, lower = calculated_res, upper = calculated_res)
+
+    assert_number(calculated_res, lower = 0.0001)
+    resolution %>%
+      assert_number(
+        lower = calculated_res,
+        upper = calculated_res,
+        msg = "The informed resolution (resolution) doesn't match to the resolution calculated from modeling area (an_area)."
+      )
   }
 
   an_area <- an_area %>%
@@ -220,7 +266,12 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
     an_area %>%
       crs()
   )
-  assert_class(crs_result, "CRS", .var.name = "epsg_code")
+
+  crs_result %>%
+    assert_class(
+      classes = "CRS",
+      msg = "A modeling area (an_area) must have a valid EPSG code (epsg_code) starting with 'EPSG:', for example EPSG:6933."
+    )
 
   if (an_area %>% class() == "SpatialPolygons"){
     quiet(
@@ -235,7 +286,8 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
 #' @noRd
 #' @keywords internal
 .is_gridded <- function(an_area){
-  check_class(an_area, "Spatial")
+  an_area %>%
+    assert_class("Spatial")
   if (!an_area %>% is("SpatialPolygonsDataFrame")) {
     return(F)
   }
@@ -249,7 +301,8 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
 #' @noRd
 #' @keywords internal
 .get_resolution <- function(an_area){
-  check_class(an_area, "Spatial")
+  an_area %>%
+    assert_class("Spatial")
   if (an_area %>% .is_gridded()){
     coords <- an_area@polygons %>%
       extract2(1) %>%

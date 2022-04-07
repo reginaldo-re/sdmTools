@@ -120,13 +120,18 @@ save_gpkg.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL)
 
 #' @export
 save_gpkg.Spatial <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  assert_string(new_name, min.chars = 1)
-  assert_string(dir_path, min.chars = 1)
-  if (!new_name %>% is.null()){
-    new_name <- new_name %>%
-      path_ext_remove()
-  }
-
+  new_name %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a name (new_name)."
+    )
+  dir_path %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
+  new_name <- new_name %>%
+    path_ext_remove()
 
   if (!dir_path %>% dir_exists()){
     quiet(
@@ -134,7 +139,10 @@ save_gpkg.Spatial <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
         dir_create()
     )
   }
-  assert_directory_exists(dir_path)
+  dir_path %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
 
   return(an_area)
 }
@@ -217,8 +225,15 @@ save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, new_name = NULL, 
     check_class(an_area, "SpatialPolygonsDataFrame"),
     check_class(an_area, "SpatialLinesDataFrame")
   )
-  assert_string(new_name, min.chars = 1)
-  assert_directory_exists(dir_path)
+  new_name %>%
+    assert_string(
+      min.chars = 1,
+      msg = "A modeling area (an_area) must have a name (new_name)."
+    )
+  dir_path %>%
+    assert_directory_exists(
+      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+    )
   assert(
     check_class(crs, "CRS"),
     check_null(crs)

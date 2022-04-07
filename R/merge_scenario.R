@@ -71,9 +71,25 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
 #' @noRd
 #' @keywords internal
 .sp_merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, new_name = NULL, dir_path = NULL) {
-  assert_class(an_area, "SDM_area")
-  assert_class(to_merge_scenario, "SDM_scenario")
-  assert_subset(var_names %>% unlist(), choices = detect_vars(to_merge_scenario, var_names), empty.ok = F)
+  an_area %>%
+    assert_class(
+      classes = "SDM_area",
+      msg = "A modeling area (an_area) must be an object of SDM_area class."
+    )
+
+  to_merge_scenario %>%
+    assert_class(
+      classes = "SDM_scenario",
+      msg = "A scenario (a_scenario) must be an object of SDM_scenario class."
+    )
+
+  var_names %>%
+    unlist() %>%
+    assert_subset(
+        choices = detect_vars(to_merge_scenario, var_names),
+        empty.ok = F,
+        msg = "Variable names in the scenario (to_merge_scenario) must be in the variable names list (var_names) of the modeling area (an_area)."
+      )
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
   if (to_merge_scenario$is_rast){
@@ -130,13 +146,13 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
 
     tmp_area@data <- tmp_area %>%
       slot("data") %>%
-      select(c(ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid)) %>%
+      select(c(ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid) %>% any_of()) %>%
       inner_join(
         an_area$study_area@data,
         by = c(ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid)
       ) %>%
       mutate_at(ATTR_CONTROL_NAMES$cell_id, ~ 1:nrow(tmp_area@data)) %>%
-      select(c(ATTR_CONTROL_NAMES$cell_id, ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid, col_names))
+      select(c(ATTR_CONTROL_NAMES$cell_id, ATTR_CONTROL_NAMES$x_centroid, ATTR_CONTROL_NAMES$y_centroid, col_names) %>% any_of())
 
     an_area$study_area <- tmp_area
   }

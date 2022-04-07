@@ -103,7 +103,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
-  assert_number(resolution, lower = 0.0001)
+  resolution %>%
+    assert_number(
+      lower = 0.0001,
+      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+    )
 
   var_found <- to_merge_area %>%
     detect_vars(var_names)

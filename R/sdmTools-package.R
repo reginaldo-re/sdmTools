@@ -61,7 +61,11 @@ utils::globalVariables(
     "group",
     "comma",
     "species",
-    "presence"
+    "presence",
+    "grid_cell_id",
+    "value",
+    "x",
+    "y"
   )
 )
 

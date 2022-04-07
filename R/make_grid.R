@@ -85,7 +85,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
 #' @noRd
 #' @keywords internal
 .make_grid_SpatialPolygons <- function(an_area = NULL, var_names = NULL, resolution = NULL){
-  assert_class(an_area, "SpatialPolygons")
+  an_area %>%
+    assert_class(
+      classes = "SpatialPolygons",
+      msg = "A modeling area (an_area) must be an object of SpatialPolygons* class."
+    )
 
   an_area <- an_area %>%
     as("SpatialPolygonsDataFrame")
@@ -107,7 +111,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
 #' @noRd
 #' @keywords internal
 .make_grid_SpatialLines <- function(an_area = NULL, var_names = NULL, resolution = NULL){
-  assert_class(an_area, "SpatialLines")
+  an_area %>%
+    assert_class(
+      classes = "SpatialLines",
+      msg = "A modeling area (an_area) must be an object of SpatialLines* class."
+    )
 
   an_area <- an_area %>%
     as("SpatialLinesDataFrame")
@@ -128,14 +136,16 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
 #' @noRd
 #' @keywords internal
 .sp_make_grid <- function(an_area = NULL, var_names = NULL, resolution = NULL){
-  grid_cell_id <- value <- x <- y <- NULL
-
   assert(
     check_class(an_area, "SpatialPolygons"),
     check_class(an_area, "SpatialLines"),
     .var.name = "an_area"
   )
-  assert_number(resolution, lower = 0.0001)
+  resolution %>%
+    assert_number(
+      lower = 0.0001,
+      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+    )
   assert(
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)

@@ -84,13 +84,35 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
   if (test_directory_exists(an_area)){
     file_list <- an_area %>%
       dir_ls(recurse = F, type = "file")
-    assert_character(file_list, any.missing = F, all.missing = F, min.len = 1, unique = T)
+
+    file_list %>%
+      assert_character(
+        any.missing = F,
+        all.missing = F,
+        min.len = 1,
+        unique = T,
+        msg = "There must be a list o valid files whether a modeling area (an_area) is a directory."
+      )
 
     file_types <- file_list %>%
       path_ext() %>%
       unique()
-    assert_int(length(file_types), lower = 1, upper = 1, .var.name = "File types.")
-    assert_subset(file_types, as_vector(RAST_FORMATS_EXT), empty.ok = F)
+
+    file_types %>%
+      length() %>%
+      assert_int(
+        lower = 1,
+        upper = 1,
+        msg = "There must be only one valid file type, or raster or vect, in the scenario (a_scenario)."
+      )
+
+    file_types %>%
+      assert_subset(
+        choices = RAST_FORMATS_EXT %>% as_vector(),
+        empty.ok = F,
+        msg = "The file type encountered in the scenario (a_scenario) must be a valid raster."
+      )
+
 
     dir_list <- an_area %>%
       dir_ls(recurse = F, type = "directory")
