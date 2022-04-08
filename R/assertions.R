@@ -1,8 +1,4 @@
 check_ <- function(fun = NULL, ..., msg = NULL){
-  checkmate::assert(
-    checkmate::check_character(msg, any.missing = F, all.missing = F, min.len = 1),
-    checkmate::check_null(msg)
-  )
   result <- "check_" %>%
     paste0(fun) %>%
     rlang::call2(..., .ns = "checkmate") %>%
@@ -27,6 +23,68 @@ check_ <- function(fun = NULL, ..., msg = NULL){
   } else {
     msg %>%
       abort()
+  }
+}
+
+check_that <- function(..., combine = "or"){
+  all_calls <- rlang::enquos(...)
+
+  check_calls <- all_calls %>%
+    discard(~ rlang::call_name(.) == "check_that")
+
+  results_check_calls <- check_calls %>%
+    map(~ rlang::eval_tidy(.))
+
+  if (combine == "or"){
+    if ((results_check_calls == T) %>% any()){
+      return(T)
+    } else {
+      results_check_calls <- results_check_calls %>%
+        discard(~ . == T)
+
+      check_that_calls <- all_calls %>%
+        keep(~ rlang::call_name(.) == "check_that")
+
+      results_check_that_calls <-  check_that_calls %>%
+        map(~ rlang::eval_tidy(.))
+
+      if ((results_check_that_calls ==T) %>% any()){
+        return(T)
+      } else {
+        return(
+          c(
+            results_check_calls,
+            results_check_that_calls
+          )
+        )
+      }
+    }
+  } else{
+    results_check_calls <- results_check_calls %>%
+      discard(~ . == T)
+
+    check_that_calls <- all_calls %>%
+      keep(~ rlang::call_name(.) == "check_that")
+
+    results_check_that_calls <- check_that_calls %>%
+      map(~ rlang::eval_tidy(.)) %>%
+      flatten()
+
+    if (results_check_that_calls %>% length() > 0){
+      results_check_that_calls <- results_check_that_calls %>%
+        discard(~ . == T)
+    }
+
+    results_all_calls <- c(
+      results_check_calls,
+      results_check_that_calls
+    )
+
+    if (results_all_calls %>% length() > 0){
+      return(results_all_calls)
+    } else {
+      return(T)
+    }
   }
 }
 
