@@ -1,7 +1,7 @@
 #' Drop non-contiguous polygons with area smaller or equal lower_bound.
 #'
 #' @param an_area A \code{SDM_area} object representing the area of study.
-#' @param new_name A name to new area study after dropping smaller polygons.
+#' @param sdm_area_name A name to new area study after dropping smaller polygons.
 #' @param lower_bound A lower bound area indicating polygons which it going to dropped out.
 #'
 #' @return A \code{SDM_area} containing an object of package
@@ -32,28 +32,28 @@
 #'  ) %>%
 #'  keep_areas_gt(
 #'     0.25,
-#'     new_name = "Removing a single area from a SpatialPolygons study area."
+#'     sdm_area_name = "Removing a single area from a SpatialPolygons study area."
 #'  )
 #'
 #' plot(new_area$study_area)
 #' }
-keep_areas_gt <- function(an_area = NULL, lower_bound = 0, new_name = NULL, dir_path = NULL){
+keep_areas_gt <- function(an_area = NULL, lower_bound = 0, sdm_area_name = NULL, dir_path = NULL){
   an_area$study_area %>%
     assert_class(
       classes = "SpatialPolygons",
       msg = "A modeling area (an_area$study_area) must be an object of SpatialPolygons* class."
     )
-  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
-  if (!new_name %>% is.null()){
-    an_area$name <- new_name %>%
+  if (!sdm_area_name %>% is.null()){
+    an_area$sdm_area_name <- sdm_area_name %>%
       to_snake_case()
   }
   if (!dir_path %>% is.null()){
     an_area$dir_path <- dir_path
   }
-  new_name <- an_area$name
+  sdm_area_name <- an_area$sdm_area_name
   dir_path <- an_area$dir_path
 
   if(dir_path %>% dir_exists()){

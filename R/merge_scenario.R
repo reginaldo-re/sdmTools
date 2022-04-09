@@ -9,7 +9,7 @@
 #' @export
 #'
 #' @examples
-merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
     check_class(to_merge_scenario, "SDM_scenario", ordered = T, null.ok = F),
     check_directory_exists(to_merge_scenario)
@@ -18,7 +18,7 @@ merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names =
     check_list(var_names, types = "character", any.missing = F, all.missing = F, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = F, unique = T, null.ok = T)
   )
-  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
   if (!an_area$scenario %>% is.null()){
@@ -30,7 +30,7 @@ merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names =
 }
 
 #' @export
-merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, new_name = NULL, dir_path = NULL) {
+merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL) {
   if (!an_area$gridded){
     an_area <- an_area %>%
       make_grid.SDM_area()
@@ -54,13 +54,13 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
     .sp_merge_scenario(
       to_merge_scenario = to_merge_scenario,
       var_names = var_names,
-      new_name = new_name,
+      sdm_area_name = sdm_area_name,
       dir_path = dir_path
     )
 
   an_area <- an_area %>%
     save_gpkg(
-      new_name = new_name,
+      sdm_area_name = sdm_area_name,
       dir_path = dir_path
     )
 
@@ -70,7 +70,7 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
 
 #' @noRd
 #' @keywords internal
-.sp_merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, new_name = NULL, dir_path = NULL) {
+.sp_merge_scenario <- function(an_area = NULL, to_merge_scenario = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL) {
   an_area %>%
     assert_class(
       classes = "SDM_area",
@@ -164,7 +164,7 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
 
   an_area <- an_area %>%
     save_gpkg(
-      new_name = new_name,
+      sdm_area_name = sdm_area_name,
       dir_path = dir_path
     )
 
@@ -215,7 +215,7 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
             any_of()
         )
 
-      new_name <- atomic_scenario %>%
+      sdm_area_name <- atomic_scenario %>%
         str_remove(paste0(a_scenario$dir_path, "/")) %>%
         str_remove(paste0(a_scenario$sdm_scenario_name, "/")) %>%
         path_file()
@@ -231,7 +231,7 @@ merge_scenario.SDM_area <- function(an_area = NULL, to_merge_scenario = NULL, va
 
       tmp_area %>%
         save_gpkg(
-          new_name = new_name,
+          sdm_area_name = sdm_area_name,
           dir_path = new_dir_path
         )
       rm(tmp_area)

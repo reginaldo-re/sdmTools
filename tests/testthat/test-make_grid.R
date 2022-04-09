@@ -11,7 +11,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) removing all
     ) %>%
     make_grid(
       var_names = list(),
-      new_name = "New name.gpkg",
+      sdm_area_name = "New name.gpkg",
       dir_path = a_dir
     )
 
@@ -44,7 +44,7 @@ test_that("Making a grid over study area (SpatialPolygonsDataframe) with all var
       dir_path = a_dir
     ) %>%
     make_grid(
-      new_name = "New name",
+      sdm_area_name = "New name",
       dir_path = a_dir
     )
 

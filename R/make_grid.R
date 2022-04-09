@@ -5,7 +5,7 @@
 #' (ignoring case and partially matched) in the study area. Variables are calculated using
 #' the average of features (polygons or lines) coverage by each cell.
 #' @param centroid A boolean indicating if x_centroid and y_centroid variables must be computed and appended
-#' @param new_name A name to new area study after make a grid over area.
+#' @param sdm_area_name A name to new area study after make a grid over area.
 #' @return A \code{SDM_area} object with cells covering the study area. The dataframe contains the variables
 #' matched and computed acoording to each cell.
 #' @export
@@ -24,7 +24,7 @@
 #'
 #' gridded_area <- SPDF %>%
 #'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-#'  make_grid(var_names = list(), new_name = T)
+#'  make_grid(var_names = list(), sdm_area_name = T)
 #'
 #' plot(gridded_area)
 #'
@@ -34,12 +34,12 @@
 #'
 #' plot(gridded_area)
 #' }
-make_grid <- function(an_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+make_grid <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
-  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
   if (an_area$gridded){
@@ -52,7 +52,7 @@ make_grid <- function(an_area = NULL, var_names = NULL, new_name = NULL, dir_pat
 }
 
 #' @export
-make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
     check_class(an_area$study_area, "SpatialPolygons"),
     check_class(an_area$study_area, "SpatialLines")
@@ -75,7 +75,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
 
   an_area <- an_area %>%
     save_gpkg(
-      new_name = new_name,
+      sdm_area_name = sdm_area_name,
       dir_path = dir_path
     )
 
@@ -139,7 +139,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
   assert(
     check_class(an_area, "SpatialPolygons"),
     check_class(an_area, "SpatialLines"),
-    .var.name = "an_area"
+    msg = "A modeling area (an_area) must be an object of SpatialLines class or SpatialPolygons class."
   )
   resolution %>%
     assert_number(
@@ -158,14 +158,11 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
     setdiff(var_found) %>%
     unlist(recursive = T)
 
-  if (test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
-    c(
-      "Variables not found:",
-      var_not_found
-    ) %>%
-      abort()
-  }
-
+  var_not_found %>%
+    is_empty() %>%
+    assert_true(
+      msg = c("Variables not found:", var_not_found)
+    )
 
   if (var_found %>% length() > 0){
     if (!ATTR_CONTROL_NAMES$cell_id %>% is_in(var_found)){
@@ -187,7 +184,7 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, new_name = NULL
 
   an_area %>%
     save_gpkg(
-      new_name = shp_tmp_file %>% path_file(),
+      sdm_area_name = shp_tmp_file %>% path_file(),
       dir_path = shp_tmp_file %>% path_dir()
     )
 

@@ -241,7 +241,7 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
 
   an_area %>%
     save_gpkg(
-      new_name = sdm_area_name,
+      sdm_area_name = sdm_area_name,
       dir_path = dir_path
     )
 

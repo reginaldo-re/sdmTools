@@ -20,7 +20,7 @@
 #'
 #' gridded_area <- SPDF %>%
 #'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-#'  make_grid(var_names = list(), new_name = T)
+#'  make_grid(var_names = list(), sdm_area_name = T)
 #'
 #' tmp_dir <- tempdir()
 #'
@@ -31,20 +31,20 @@
 #'    paste0("/test_area_grid_50000_epsg_6933.gpkg") %>%
 #'    file_info()
 #' }
-save_gpkg <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  assert_string(new_name, min.chars = 1, null.ok = T)
+save_gpkg <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
   UseMethod("save_gpkg", an_area)
 }
 
 #' @export
-save_gpkg.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  if (!new_name %>% is.null()){
-    new_name <- new_name %>%
+save_gpkg.SDM_area <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
+  if (!sdm_area_name %>% is.null()){
+    sdm_area_name <- sdm_area_name %>%
       path_ext_remove()
 
-    an_area$sdm_area_name <- new_name %>%
+    an_area$sdm_area_name <- sdm_area_name %>%
       path_ext_remove()
   }
   if (!an_area$dir_path %>% dir_exists()){
@@ -59,26 +59,26 @@ save_gpkg.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL)
   if (dir_path %>% is.null() || dir_path == an_area$dir_path){
     an_area$study_area %>%
       save_gpkg(
-        new_name = an_area$sdm_area_name,
+        sdm_area_name = an_area$sdm_area_name,
         dir_path = an_area$dir_path
       )
 
     # .sp_save_gpkg(
     #   an_area = an_area$study_area,
-    #   new_name = an_area$sdm_area_name,
+    #   sdm_area_name = an_area$sdm_area_name,
     #   dir_path = an_area$dir_path,
     #   crs = an_area$study_area %>% crs()
     # )
   } else {
     an_area$study_area %>%
       save_gpkg(
-        new_name = an_area$sdm_area_name,
+        sdm_area_name = an_area$sdm_area_name,
         dir_path = dir_path
       )
 
     # an_area$study_area %>%
     #   .sp_save_gpkg(
-    #     new_name = an_area$sdm_area_name,
+    #     sdm_area_name = an_area$sdm_area_name,
     #     dir_path = dir_path,
     #     crs = an_area$study_area %>% crs()
     #   )
@@ -119,18 +119,18 @@ save_gpkg.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL)
 }
 
 #' @export
-save_gpkg.Spatial <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  new_name %>%
+save_gpkg.Spatial <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
+  sdm_area_name %>%
     assert_string(
       min.chars = 1,
-      msg = "A modeling area (an_area) must have a name (new_name)."
+      msg = "A modeling area (an_area) must have a name (sdm_area_name)."
     )
   dir_path %>%
     assert_string(
       min.chars = 1,
       msg = "A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
     )
-  new_name <- new_name %>%
+  sdm_area_name <- sdm_area_name %>%
     path_ext_remove()
 
   if (!dir_path %>% dir_exists()){
@@ -148,7 +148,7 @@ save_gpkg.Spatial <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
 }
 
 #' @export
-save_gpkg.SpatialLines <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+save_gpkg.SpatialLines <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
   an_area <- NextMethod(an_area)
 
   an_area <- an_area %>%
@@ -160,7 +160,7 @@ save_gpkg.SpatialLines <- function(an_area = NULL, new_name = NULL, dir_path = N
 
   .sp_save_gpkg(
     an_area = an_area %>% as("SpatialLinesDataFrame"),
-    new_name = new_name,
+    sdm_area_name = sdm_area_name,
     dir_path = dir_path,
     crs = an_area %>% crs()
   )
@@ -169,13 +169,13 @@ save_gpkg.SpatialLines <- function(an_area = NULL, new_name = NULL, dir_path = N
 }
 
 #' @export
-save_gpkg.SpatialLinesDataFrame <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+save_gpkg.SpatialLinesDataFrame <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
   an_area <- an_area %>%
-    save_gpkg.Spatial(new_name, dir_path)
+    save_gpkg.Spatial(sdm_area_name, dir_path)
 
   .sp_save_gpkg(
     an_area = an_area,
-    new_name = new_name,
+    sdm_area_name = sdm_area_name,
     dir_path = dir_path,
     crs = an_area %>% crs()
   )
@@ -184,7 +184,7 @@ save_gpkg.SpatialLinesDataFrame <- function(an_area = NULL, new_name = NULL, dir
 }
 
 #' @export
-save_gpkg.SpatialPolygons <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+save_gpkg.SpatialPolygons <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
   an_area <- NextMethod(an_area)
 
   an_area <- an_area %>%
@@ -196,7 +196,7 @@ save_gpkg.SpatialPolygons <- function(an_area = NULL, new_name = NULL, dir_path 
 
   .sp_save_gpkg(
     an_area = an_area %>% as("SpatialPolygonsDataFrame"),
-    new_name = new_name,
+    sdm_area_name = sdm_area_name,
     dir_path = dir_path,
     crs = an_area %>% crs()
   )
@@ -205,13 +205,13 @@ save_gpkg.SpatialPolygons <- function(an_area = NULL, new_name = NULL, dir_path 
 }
 
 #' @export
-save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
+save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
   an_area <- an_area %>%
-    save_gpkg.Spatial(new_name, dir_path)
+    save_gpkg.Spatial(sdm_area_name, dir_path)
 
   .sp_save_gpkg(
     an_area = an_area,
-    new_name = new_name,
+    sdm_area_name = sdm_area_name,
     dir_path = dir_path,
     crs = an_area %>% crs()
   )
@@ -220,15 +220,15 @@ save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, new_name = NULL, 
 }
 
 
-.sp_save_gpkg <- function(an_area = NULL, new_name = NULL, dir_path = NULL, crs = NULL){
+.sp_save_gpkg <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL, crs = NULL){
   assert(
     check_class(an_area, "SpatialPolygonsDataFrame"),
     check_class(an_area, "SpatialLinesDataFrame")
   )
-  new_name %>%
+  sdm_area_name %>%
     assert_string(
       min.chars = 1,
-      msg = "A modeling area (an_area) must have a name (new_name)."
+      msg = "A modeling area (an_area) must have a name (sdm_area_name)."
     )
   dir_path %>%
     assert_directory_exists(
@@ -252,11 +252,11 @@ save_gpkg.SpatialPolygonsDataFrame <- function(an_area = NULL, new_name = NULL, 
   }
 
   dsn = ifelse(
-    new_name %>% path_ext() == "",
-    dir_path %>% path(new_name) %>% paste0(".gpkg"),
-    dir_path %>% path(new_name) %>% path_ext_remove() %>% paste0(".gpkg")
+    sdm_area_name %>% path_ext() == "",
+    dir_path %>% path(sdm_area_name) %>% paste0(".gpkg"),
+    dir_path %>% path(sdm_area_name) %>% path_ext_remove() %>% paste0(".gpkg")
   )
-  layer = new_name %>%
+  layer = sdm_area_name %>%
     path_file() %>%
     path_ext_remove()
 

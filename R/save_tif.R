@@ -2,9 +2,9 @@
 #'
 #' @param an_area A \code{SDM_area} object representing the area of the study.
 #'
-#' @param new_name The name of file which the \code{sp} object will be saved.
-#' The \code{new_name} will be prepended to each attribute name of the \code{sp} object.
-#' If the \code{new_name} parameter is equal to NULL, it is replaced by
+#' @param sdm_area_name The name of file which the \code{sp} object will be saved.
+#' The \code{sdm_area_name} will be prepended to each attribute name of the \code{sp} object.
+#' If the \code{sdm_area_name} parameter is equal to NULL, it is replaced by
 #' a name computed based on attributes of the \code{SDM_area} object.
 #' @param dir_path The path in which the file will be saved.
 #'
@@ -19,15 +19,15 @@
 #'
 #' gridded_area <- SPDF %>%
 #'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-#'  make_grid(var_names = list(), new_name = T)
+#'  make_grid(var_names = list(), sdm_area_name = T)
 #'
 #' tmp_dir <- tempdir()
 #'
 #' gridded_area %>%
 #'    save_tif(dir_path = tmp_dir)
 #' }
-save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  assert_string(new_name, min.chars = 1, null.ok = T)
+save_tif <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
 
   UseMethod("save_tif", an_area)
@@ -35,12 +35,12 @@ save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
 
 
 #' @export
-save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
-  if (!new_name %>% is.null()){
-    new_name <- new_name %>%
+save_tif.SDM_area <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL){
+  if (!sdm_area_name %>% is.null()){
+    sdm_area_name <- sdm_area_name %>%
       path_ext_remove()
 
-    an_area$sdm_area_name <- new_name
+    an_area$sdm_area_name <- sdm_area_name
   }
 
   if (dir_path %>% is.null()){
@@ -54,7 +54,7 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
     assert_directory_exists(tmp_dir_path)
     .sp_save_tif(
       an_area = an_area$study_area,
-      new_name = an_area$sdm_area_name,
+      sdm_area_name = an_area$sdm_area_name,
       dir_path = tmp_dir_path,
       crs = an_area$study_area %>% crs(),
       resolution = an_area$resolution
@@ -92,7 +92,7 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
     )
     .sp_save_tif(
       an_area = an_area$study_area,
-      new_name = an_area$sdm_area_name,
+      sdm_area_name = an_area$sdm_area_name,
       dir_path = an_area$dir_path,
       crs = an_area$study_area %>% crs(),
       resolution = an_area$resolution
@@ -103,22 +103,22 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
 
 #' @noRd
 #' @keywords internal
-.sp_save_tif <- function(an_area = NULL, new_name = NULL, dir_path = NULL, crs = NULL, resolution = NULL){
+.sp_save_tif <- function(an_area = NULL, sdm_area_name = NULL, dir_path = NULL, crs = NULL, resolution = NULL){
   an_area %>%
     assert_class(
       classes = "SpatialPolygons",
       msg = "A modeling area (an_area) must be an object of SpatialPolygons* class."
     )
 
-  new_name %>%
+  sdm_area_name %>%
     assert_string(
       min.chars = 1,
-      msg = "A modeling area (an_area) must have a name (new_name)."
+      msg = "A modeling area (an_area) must have a name (sdm_area_name)."
     )
   dir_path %>%
-    path(new_name) %>%
+    path(sdm_area_name) %>%
     assert_directory_exists(
-      msg = "A problem occurs on the directory creation (dir_path %>% path(new_name)). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+      msg = "A problem occurs on the directory creation (dir_path %>% path(sdm_area_name)). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
     )
   crs %>%
     assert_class(
@@ -147,7 +147,7 @@ save_tif.SDM_area <- function(an_area = NULL, new_name = NULL, dir_path = NULL){
   result = quiet(
     tmp_raster %>%
       writeRaster(
-        filename = dir_path %>% path(new_name) %>% path(names(an_area)),
+        filename = dir_path %>% path(sdm_area_name) %>% path(names(an_area)),
         overwrite = T,
         bylayer = T,
         format = "GTiff"

@@ -31,7 +31,7 @@ test_that("Merge raster over non gridded SDM_area with all unnamed raster variab
     ) %>%
     merge_area(
       to_merge_area = system.file("rast_files", package="sdmTools"),
-      new_name = "Test"
+      sdm_area_name = "Test"
     )
 
   expect_equal(gridded_area$study_area$wc2.0_bio_5m_01 %>% mean() %>% round(2), 24.37)

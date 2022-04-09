@@ -6,7 +6,7 @@
 #' the average of features (polygons or lines) coverage by each cell.
 #' @param to_merge_area A path to a \code{Raster*} (\url{https://cran.r-project.org/web/packages/raster/})
 #' object (folder or file) with variables to merge with.
-#' @param new_name A name to new area study after merge rasters over area.
+#' @param sdm_area_name A name to new area study after merge rasters over area.
 #' the average of features (polygons or lines) coverage by each cell.
 #' @return A \code{SDM_area} object containing variables merged with. If the CRS of the \code{Raster*} is
 #' different from the CRS of the \code{SDM_area} object, it is reproject. The merging process
@@ -23,7 +23,7 @@
 #'
 #' gridded_area <- SPDF %>%
 #'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-#'  make_grid(var_names = list(), new_name = T)
+#'  make_grid(var_names = list(), sdm_area_name = T)
 #'
 #' gridded_area <- gridded_area %>%
 #'    merge_area(
@@ -34,7 +34,7 @@
 #' gridded_area$study_area@data %>% head()
 #' }
 #'
-merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
     check_file_exists(to_merge_area),
     check_directory_exists(to_merge_area),
@@ -46,13 +46,12 @@ merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, n
     check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
     check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
   )
-  assert_string(new_name, min.chars = 1, null.ok = T)
+  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
   assert_string(dir_path, min.chars = 1, null.ok = T)
-
-  if (!an_area$scenarios %>% is.null()){
-    "It is not possible to merge an area in a sdm_area when scenarios is not null! Please assign null to scenario." %>%
-      abort()
-  }
+  assert_true(
+    an_area$scenarios %>% is.null(),
+    msg = "It is not possible to merge an area in a sdm_area when scenarios is not null! Please assign null to scenario."
+  )
 
   UseMethod("merge_area", an_area)
 }
@@ -60,7 +59,7 @@ merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, n
 
 
 #' @export
-merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, new_name = NULL, dir_path = NULL){
+merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   if (!an_area$gridded){
     an_area <- an_area %>%
       make_grid.SDM_area(
@@ -77,7 +76,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
 
   an_area <- an_area %>%
       save_gpkg(
-        new_name = new_name,
+        sdm_area_name = sdm_area_name,
         dir_path = dir_path
       )
 
@@ -112,22 +111,21 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   var_found <- to_merge_area %>%
     detect_vars(var_names)
 
-  if (var_found %>% is_empty()){
-    "None variables found in to_merge_area." %>%
-      abort()
-  }
+  var_found %>%
+    is_empty() %>%
+    assert_false(
+      msg = "None variables found in to_merge_area."
+    )
 
   var_not_found <- var_names %>%
     setdiff(var_found) %>%
     unlist(recursive = T)
 
-  if (test_character(var_not_found, any.missing = F, all.missing = F, min.len = 1, unique = T)){
-    c(
-      "Variables not found:",
-      var_not_found
-    ) %>%
-      abort()
-  }
+  var_not_found %>%
+    is_empty() %>%
+    assert_true(
+      msg = c("Variables not found:", var_not_found)
+    )
 
   var_conflicted <- var_found %>%
     extract(
@@ -135,13 +133,11 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
         detect_vars() %>%
         is_in(var_found)
     )
-  if (!var_conflicted %>% is_empty()){
-    c(
-      "These variables already exists in SDM_area object:",
-      var_conflicted
-    ) %>%
-      abort()
-  }
+  var_conflicted %>%
+    is_empty() %>%
+    assert_true(
+      msg = c("These variables already exists in SDM_area object:", var_conflicted)
+    )
 
   if (!to_merge_area %>% is_dir()){
     to_merge_area <- to_merge_area %>%
@@ -157,10 +153,16 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
       as.vector()
   }
 
-  if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
-    "At least one variable name is ambiguous. Try to use more specific variable names." %>%
-      abort()
-  }
+  assert(
+      check_false(raster_list %>% length() != var_names %>% length()),
+      check_false(raster_list %>% is.null()),
+      combine = "and",
+      msg = "At least one variable name is ambiguous. Try to use more specific variable names."
+  )
+  #if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
+  #  "At least one variable name is ambiguous. Try to use more specific variable names." %>%
+  #    abort()
+  #}
 
   raster_stack <- raster_list %>%
     stack()
@@ -194,7 +196,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     #gUnionCascaded() %>%
     as("SpatialPolygonsDataFrame") %>%
     save_gpkg(
-      new_name = shp_countour_file %>% path_file(),
+      sdm_area_name = shp_countour_file %>% path_file(),
       dir_path = shp_countour_file %>% path_dir()
     )
 
@@ -202,7 +204,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
 
   an_area %>%
     save_gpkg(
-      new_name = shp_area_file %>% path_file(),
+      sdm_area_name = shp_area_file %>% path_file(),
       dir_path = shp_area_file %>% path_dir()
     )
 

@@ -12,7 +12,7 @@ test_that("Saving a SDM_area to gpkg file.", {
 
   new_sdm_area <- a_sdm_area %>%
     save_gpkg(
-      new_name = "New filename.gpkg",
+      sdm_area_name = "New filename.gpkg",
       dir_path = a_dir
     )
 
@@ -29,7 +29,7 @@ test_that("Saving SPDF to gpkg file.", {
 
   new_SPDF <- SPDF %>%
     save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir
     )
 
@@ -44,7 +44,7 @@ test_that("Saving SLDF to gpkg file.", {
   a_dir <- tempdir() %>% path(stri_rand_strings(1,6))
   new_SLDF <- SLDF %>%
     save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir
     )
 
@@ -58,7 +58,7 @@ test_that("Saving SP to gpkg file.", {
   a_dir <- tempdir() %>% path(stri_rand_strings(1,6))
   new_SP <- SP %>%
     save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir
     )
 
@@ -73,7 +73,7 @@ test_that("Saving SL to gpkg file.", {
   a_dir <- tempdir() %>% path(stri_rand_strings(1,6))
   new_SL <- SL %>%
     save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir
     )
 
@@ -97,7 +97,7 @@ test_that("Saving SPDF to gpkg file with no crs argument.", {
 
   new_SPDF <- SPDF %>%
     .sp_save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir
     )
 
@@ -115,7 +115,7 @@ test_that("Saving SPDF to gpkg file with a different crs than SPDF.", {
 
   new_SPDF <- SPDF %>%
     .sp_save_gpkg(
-      new_name = "New filename",
+      sdm_area_name = "New filename",
       dir_path = a_dir,
       crs = crs("EPSG:5880")
     )

@@ -19,7 +19,7 @@
 #'
 #' gridded_area <- SPDF %>%
 #'  sdm_area("Test area", "EPSG:6933", c(50000, 50000)) %>%
-#'  make_grid(var_names = list(), new_name = T)
+#'  make_grid(var_names = list(), sdm_area_name = T)
 #'
 #' a_df <- gridded_area %>%
 #'    sdm_tidy(region = "cell_id")
