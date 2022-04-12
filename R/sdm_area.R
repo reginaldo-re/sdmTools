@@ -115,8 +115,7 @@ sdm_area.Spatial <- function(an_area = NULL, var_names = NULL, sdm_area_name = N
 .sp_sdm_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL, epsg_code = NULL, resolution = NULL){
   assert(
     check_class(an_area, "SpatialPolygons"),
-    check_class(an_area, "SpatialLines"),
-    .var.name = "an_area"
+    check_class(an_area, "SpatialLines")
   )
   sdm_area_name %>%
     assert_string(

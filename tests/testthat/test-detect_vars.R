@@ -21,16 +21,17 @@ describe("Given the variables is into a list", {
   })
 
 
-  it("When study area variable names is empty, then I expect an error.", {
-    expect_error(
+  it("When study area variable names is empty, then I expect an empty list.", {
+    expect_list(
       .detect_vars(
         list(),
         list("bio_5m_01","bio_5m_02")
-      )
+      ),
+      len = 0
     )
   })
 
-  it("When detecting ambiguous variable names, then I expect an error.", {
+  it("When detecting ambiguous variable names, then I expect an empty list.", {
     expect_error(
       .detect_vars(
         list("bio_5m_01","bio_5m_02"),

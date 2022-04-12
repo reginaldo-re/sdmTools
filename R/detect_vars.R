@@ -2,14 +2,17 @@
 #' @keywords internal
 detect_vars <- function(an_area = NULL, var_names = NULL){
   assert(
-    var_names %>%
-      check_list(types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    var_names %>%
-      check_character(any.missing = F, all.missing = T, unique = T, null.ok = T),
-    msg = "The variable names argument (var_names) must be:" %>%
-      paste("a vector/list of non duplicated strings to be selected.") %>%
-      paste("an empty list/vector to select none variable; or,") %>%
-      paste("NULL to select all available variables.")
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    check_list(
+      var_names,
+      types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+      msg = "a vector/list of non duplicated strings to be selected."
+    ),
+    check_character(
+      var_names,
+      any.missing = F, all.missing = T, unique = T, null.ok = T,
+      msg = "an empty list/vector to select none variable."
+    )
   )
   UseMethod("detect_vars", an_area)
 }
@@ -82,13 +85,21 @@ detect_vars.SDM_scenario <- function(an_area = NULL, var_names = NULL){
 #' @keywords internal
 detect_vars.character <- function(an_area = NULL, var_names = NULL){
   assert(
-    check_directory_exists(an_area),
-    check_file_exists(an_area, extension = VECT_FORMATS_EXT %>% as_vector()),
-    check_character(an_area, any.missing = F, all.missing = F, min.len = 1, unique = T),
-    msg = "The study area (an_area) must be:" %>%
-      paste("an existing directory containing vector or raster files; or,") %>%
-      paste("a vector file name or a raster file name; or,") %>%
-      paste("a vector of non empty or duplicated strings represeting variable names.")
+    msg = "The study area (an_area) should be at least one of the following options:",
+    an_area %>%
+      check_directory_exists(
+        msg = "an existing directory containing vector or raster files."
+      ),
+    an_area %>%
+      check_file_exists(
+        extension = VECT_FORMATS_EXT %>% as_vector(),
+        msg = "a vector file name or a raster file name."
+      ),
+    an_area %>%
+      check_character(
+        any.missing = F, all.missing = F, min.len = 1, unique = T,
+        msg = "a vector of non empty or duplicated strings representing variable names."
+      )
   )
 
   if (test_directory_exists(an_area)){
@@ -97,11 +108,8 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
 
     file_list %>%
       assert_character(
-        any.missing = F,
-        all.missing = F,
-        min.len = 1,
-        unique = T,
-        msg = "There must be a list o valid files whether a study area (an_area) is a directory."
+        msg = "There must be a list o valid files whether a study area (an_area) is a directory.",
+        any.missing = F, all.missing = F, min.len = 1, unique = T
       )
 
     file_types <- file_list %>%
@@ -111,16 +119,14 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
     file_types %>%
       length() %>%
       assert_int(
-        lower = 1,
-        upper = 1,
-        msg = "There must be only one valid file type, or raster or vect, in the scenario (a_scenario)."
+        msg = "There must be only one valid file type, or raster or vect, in the scenario (a_scenario).",
+        lower = 1, upper = 1
       )
 
     file_types %>%
       assert_subset(
-        choices = RAST_FORMATS_EXT %>% as_vector(),
-        empty.ok = F,
-        msg = "The file type encountered in the scenario (a_scenario) must be a valid raster."
+        msg = "The file type encountered in the scenario (a_scenario) must be a valid raster.",
+        choices = RAST_FORMATS_EXT %>% as_vector(), empty.ok = F,
       )
 
 
@@ -139,9 +145,8 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
     an_area %>%
       length() %>%
       assert_int(
-        lower = 1,
-        upper = 1,
-        msg = "Only one file is accepted if the study area (an_area) is a file name!"
+        msg = "Only one file is accepted if the study area (an_area) is a file name!",
+        lower = 1, upper = 1
       )
 
     return(
@@ -155,9 +160,8 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
     an_area %>%
       length() %>%
       assert_int(
-        lower = 1,
-        upper = 1,
-        msg = "Only one file is accepted if the study area (an_area) is a file name!"
+        msg = "Only one file is accepted if the study area (an_area) is a file name!",
+        lower = 1, upper = 1
       )
     return(
       an_area %>%
@@ -178,18 +182,29 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
 #' @keywords internal
 .detect_vars <- function(an_area_names = NULL, var_names = NULL){
   assert(
-    check_list(an_area_names, types = "character", any.missing = F, all.missing = F, unique = T),
-    check_character(an_area_names, any.missing = F, all.missing = F, unique = T),
-    msg = "The variable names (an_area_names) must be:" %>%
-      paste("a vector/list of non duplicated strings represeting all available variable names.")
+    msg = "The variable names (an_area_names) should be" %>%
+      paste("a vector/list of non duplicated strings represeting all available variable names."),
+    an_area_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = F, unique = T,
+      ),
+    an_area_names %>%
+      check_character(
+        any.missing = F, all.missing = F, unique = T,
+      )
   )
   assert(
-    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T),
-    msg = "The variable names (var_names) must be:" %>%
-      paste("a vector/list of non duplicated strings to be selected.") %>%
-      paste("an empty list/vector to select none variable; or,") %>%
-      paste("NULL to select all available variables.")
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
   if(an_area_names %>% length() == 0){
     return(list())

@@ -36,7 +36,7 @@ nested_check <- function(..., combine = "or"){
     map(~ rlang::eval_tidy(.))
 
   if (combine == "or"){
-    if ((results_check_calls == T) %>% any()){
+    if ((results_check_calls == T) %>% any()){# && (msg %>% is.null())){
       return(T)
     } else {
       results_check_calls <- results_check_calls %>%
@@ -48,7 +48,7 @@ nested_check <- function(..., combine = "or"){
       results_nested_check_calls <-  nested_check_calls %>%
         map(~ rlang::eval_tidy(.))
 
-      if ((results_nested_check_calls ==T) %>% any()){
+      if ((results_nested_check_calls ==T) %>% any()){# && (msg %>% is.null())){
         return(T)
       } else {
         return(
@@ -93,29 +93,31 @@ assert <- function(..., msg = NULL, combine = "or"){
     map(~ .x %>% rlang::expr_name() %>% str_starts("assert")) %>%
     unlist() %>%
     any()
+
   if (invalid_calls){
     "There exists at least one invalid call to assert function or assert_that function. You must use only nested_check calls." %>%
       rlang::abort()
   }
 
-  results_check_calls <- list(...) %>%
-    unlist() %>%
-    as.character()
+  results_check_calls <- list(...)
 
-  if (combine == "or"){
-    if ((results_check_calls == T) %>% any()){
-      return(T)
-    } else {
-      c(msg, results_check_calls) %>%
-        abort()
-    }
+  if (!results_check_calls %>% names() %>% is.null()){
+    results_check_calls <- results_check_calls %>%
+      extract(
+        names(results_check_calls) %>%
+          map(~ .x =="") %>%
+          unlist()
+      )
+  }
+
+  if ((results_check_calls %>% keep(is.logical) == T) %>% all()){
+    return(T)
   } else {
-    if ((results_check_calls == T) %>% all()){
-      return(T)
-    } else {
-      c(msg, results_check_calls) %>%
-        abort()
-    }
+    results_check_calls <- results_check_calls %>%
+      discard(is.logical)
+
+    c(msg, results_check_calls) %>%
+      abort()
   }
 }
 
@@ -137,6 +139,14 @@ assert_number <- function(..., msg = NULL){
 
 check_directory_exists <- function(..., msg = NULL){
   return(.check(fun = "directory_exists", ..., msg = msg))
+}
+
+assert_file_exists <- function(..., msg = NULL){
+  return(.result_or_abort(fun = "file_exists", ..., msg = msg))
+}
+
+check_file_exists <- function(..., msg = NULL){
+  return(.check(fun = "file_exists", ..., msg = msg))
 }
 
 assert_directory_exists <- function(..., msg = NULL){
@@ -191,3 +201,10 @@ assert_character <- function(..., msg = NULL){
   return(.result_or_abort(fun = "character", ..., msg = msg))
 }
 
+check_list <- function(..., msg = NULL){
+  return(.check(fun = "list", ..., msg = msg))
+}
+
+assert_list <- function(..., msg = NULL){
+  return(.result_or_abort(fun = "list", ..., msg = msg))
+}
