@@ -1,6 +1,5 @@
 describe("Given the folder containing inner files and a inner folder in same hierarchy level", {
   it("When cheking the validity of that scenario folder, then I expect an error.", {
-
     a_dir <- tempdir()
     with_tempdir(
       tmpdir = a_dir,

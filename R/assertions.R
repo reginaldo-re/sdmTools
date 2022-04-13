@@ -21,12 +21,18 @@
   if (result %>% is.logical()){
     return(result)
   } else {
-    msg %>%
-      abort()
+    if (msg %>% is.null()){
+      result %>%
+        abort()
+    } else {
+      msg %>%
+        abort()
+    }
   }
 }
 
 nested_check <- function(..., combine = "or"){
+  browser()
   all_calls <- rlang::enquos(...)
 
   check_calls <- all_calls %>%
@@ -36,7 +42,8 @@ nested_check <- function(..., combine = "or"){
     map(~ rlang::eval_tidy(.))
 
   if (combine == "or"){
-    if ((results_check_calls == T) %>% any()){# && (msg %>% is.null())){
+    if ((results_check_calls %>% length() > 0) && (results_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
+    #if ((results_check_calls == T) %>% any()){# && (msg %>% is.null())){
       return(T)
     } else {
       results_check_calls <- results_check_calls %>%
@@ -48,13 +55,14 @@ nested_check <- function(..., combine = "or"){
       results_nested_check_calls <-  nested_check_calls %>%
         map(~ rlang::eval_tidy(.))
 
-      if ((results_nested_check_calls ==T) %>% any()){# && (msg %>% is.null())){
+      if ((results_nested_check_calls %>% length() > 0) && (results_nested_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
+      #if ((results_nested_check_calls ==T) %>% any()){ # && (msg %>% is.null())){
         return(T)
       } else {
         return(
           c(
-            results_check_calls,
-            results_nested_check_calls
+            results_check_calls %>% unlist(),
+            results_nested_check_calls %>% unlist()
           )
         )
       }
@@ -76,8 +84,8 @@ nested_check <- function(..., combine = "or"){
     }
 
     results_all_calls <- c(
-      results_check_calls,
-      results_nested_check_calls
+      results_check_calls %>% unlist(),
+      results_nested_check_calls %>% unlist()
     )
 
     if (results_all_calls %>% length() > 0){
@@ -110,13 +118,13 @@ assert <- function(..., msg = NULL, combine = "or"){
       )
   }
 
-  if ((results_check_calls %>% keep(is.logical) == T) %>% all()){
+  if ((results_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
     return(T)
   } else {
     results_check_calls <- results_check_calls %>%
       discard(is.logical)
 
-    c(msg, results_check_calls) %>%
+    c(msg, results_check_calls %>% unlist()) %>%
       abort()
   }
 }

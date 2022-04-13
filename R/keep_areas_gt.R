@@ -41,10 +41,12 @@ keep_areas_gt <- function(an_area = NULL, lower_bound = 0, sdm_area_name = NULL,
   an_area$study_area %>%
     assert_class(
       classes = "SpatialPolygons",
-      msg = "A modeling area (an_area$study_area) must be an object of SpatialPolygons* class."
+      msg = "A study area (an_area$study_area) must be an object of SpatialPolygons* class."
     )
-  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
-  assert_string(dir_path, min.chars = 1, null.ok = T)
+  sdm_area_name %>%
+    assert_string(min.chars = 1, null.ok = T)
+  dir_path %>%
+    assert_string(min.chars = 1, null.ok = T)
 
   if (!sdm_area_name %>% is.null()){
     an_area$sdm_area_name <- sdm_area_name %>%
@@ -66,7 +68,7 @@ keep_areas_gt <- function(an_area = NULL, lower_bound = 0, sdm_area_name = NULL,
   )
   dir_path %>%
     assert_directory_exists(
-      msg = "A problem occurs on the directory creation (dir_path). A modeling area (an_area) must have a valid directory (dir_path) where data will be saved."
+      msg = "A problem occurs on the directory creation (dir_path). A study area (an_area) must have a valid directory (dir_path) where data will be saved."
     )
 
 
@@ -85,7 +87,7 @@ keep_areas_gt <- function(an_area = NULL, lower_bound = 0, sdm_area_name = NULL,
   an_area %>%
     assert_class(
       classes = "SpatialPolygons",
-      msg = "A modeling area (an_area) must be an object of SpatialPolygons* class."
+      msg = "A study area (an_area) must be an object of SpatialPolygons* class."
     )
 
   lower_bound %>%

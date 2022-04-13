@@ -1,7 +1,10 @@
 flatten_scenario <- function(a_scenario) {
   assert(
-    check_list(a_scenario, min.len = 1, any.missing = F, all.missing = F),
-    check_character(a_scenario, min.len = 1, any.missing = F, all.missing = F)
+    msg = "The variable names argument (var_names) should be a vector/list of non empty and non duplicated scenario.",
+    a_scenario %>%
+      check_list(min.len = 1, any.missing = F, all.missing = F),
+    a_scenario %>%
+      check_character(min.len = 1, any.missing = F, all.missing = F)
   )
   .flatten_scenario <- function(an_element) {
     return(

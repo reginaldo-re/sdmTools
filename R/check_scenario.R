@@ -54,13 +54,16 @@ check_scenario.character <- function(a_scenario = NULL){
       map(~ .x %>% identical(layer_names)) %>%
       keep(~ . == F)
 
-    if(invalid_layers %>% length() > 0){
-      c(
-        "Some raster folders have different layer names!",
-        invalid_layers %>% names() %>% str_remove_all(a_scenario)
-      ) %>%
-        abort()
-    }
+    invalid_layers %>%
+      length() %>%
+      assert_int(
+        upper = 0,
+        msg = c(
+          "Some raster folders have different layer names!",
+          invalid_layers %>% names() %>% str_remove_all(a_scenario)
+        )
+      )
+
     return(TRUE)
   } else {
     file_list <- .check_scenario(a_scenario) %>%
@@ -82,13 +85,15 @@ check_scenario.character <- function(a_scenario = NULL){
       map(~ .x %>% identical(var_names)) %>%
       keep(~ . == F)
 
-    if(invalid_vars %>% length() > 0){
-      c(
-        "Some vect files have different var names!",
-        invalid_vars %>% names() %>% str_remove_all(a_scenario)
-      ) %>%
-        abort()
-    }
+    invalid_vars %>%
+      length() %>%
+      assert_int(
+        upper = 0,
+        msg = c(
+          "Some vect files have different var names!",
+          invalid_layers %>% names() %>% str_remove_all(a_scenario)
+        )
+      )
     return(TRUE)
   }
 }
@@ -100,10 +105,16 @@ check_scenario.character <- function(a_scenario = NULL){
     dir_ls(type = "file")
   dir_list <- dir_path %>%
     dir_ls(type = "dir")
-  if ((file_list %>% length() > 0 && dir_list %>% length() > 0) || (file_list %>% length() == 0 && dir_list %>% length() == 0)){
-    "Invalid scenario folder. Scenario folder must contains hierarchically a file or a list of files." %>%
-      abort()
-  }
+  assert(
+    check_false(file_list %>% length() > 0 && dir_list %>% length() > 0),
+    check_false(file_list %>% length() == 0 && dir_list %>% length() == 0),
+    combine = "and",
+    msg = "Invalid scenario folder. Scenario folder must contains hierarchically a file or a list of files."
+  )
+  # if ((file_list %>% length() > 0 && dir_list %>% length() > 0) || (file_list %>% length() == 0 && dir_list %>% length() == 0)){
+  #   "Invalid scenario folder. Scenario folder must contains hierarchically a file or a list of files." %>%
+  #     abort()
+  # }
 
   if (dir_list %>% length() > 0){
     return(

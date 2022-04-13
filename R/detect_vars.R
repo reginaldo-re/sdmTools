@@ -3,16 +3,16 @@
 detect_vars <- function(an_area = NULL, var_names = NULL){
   assert(
     msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
-    check_list(
-      var_names,
-      types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
-      msg = "a vector/list of non duplicated strings to be selected."
-    ),
-    check_character(
-      var_names,
-      any.missing = F, all.missing = T, unique = T, null.ok = T,
-      msg = "an empty list/vector to select none variable."
-    )
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
   UseMethod("detect_vars", an_area)
 }
