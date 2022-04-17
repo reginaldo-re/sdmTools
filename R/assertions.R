@@ -31,8 +31,7 @@
   }
 }
 
-nested_check <- function(..., combine = "or"){
-  browser()
+nested_check <- function(..., msg = NULL, combine = "or"){
   all_calls <- rlang::enquos(...)
 
   check_calls <- all_calls %>%
@@ -42,8 +41,7 @@ nested_check <- function(..., combine = "or"){
     map(~ rlang::eval_tidy(.))
 
   if (combine == "or"){
-    if ((results_check_calls %>% length() > 0) && (results_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
-    #if ((results_check_calls == T) %>% any()){# && (msg %>% is.null())){
+    if ((results_check_calls %>% length() > 0) && (results_check_calls %>% map(is.logical) %>% unlist() == T) %>% any()){
       return(T)
     } else {
       results_check_calls <- results_check_calls %>%
@@ -55,16 +53,16 @@ nested_check <- function(..., combine = "or"){
       results_nested_check_calls <-  nested_check_calls %>%
         map(~ rlang::eval_tidy(.))
 
-      if ((results_nested_check_calls %>% length() > 0) && (results_nested_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
-      #if ((results_nested_check_calls ==T) %>% any()){ # && (msg %>% is.null())){
+      if ((results_nested_check_calls %>% length() > 0) && (results_nested_check_calls %>% map(is.logical) %>% unlist() == T) %>% any()){
         return(T)
       } else {
-        return(
-          c(
+        if (msg %>% is.null()){
+          msg <- c(
             results_check_calls %>% unlist(),
             results_nested_check_calls %>% unlist()
           )
-        )
+        }
+        return(msg)
       }
     }
   } else{
@@ -89,7 +87,10 @@ nested_check <- function(..., combine = "or"){
     )
 
     if (results_all_calls %>% length() > 0){
-      return(results_all_calls)
+      if (msg %>% is.null()){
+        msg <- results_all_calls
+      }
+      return(msg)
     } else {
       return(T)
     }
