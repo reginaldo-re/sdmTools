@@ -36,11 +36,23 @@
 #' }
 make_grid <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
-    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
-  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
-  assert_string(dir_path, min.chars = 1, null.ok = T)
+
+  sdm_area_name %>%
+    assert_string(min.chars = 1, null.ok = T)
+  dir_path %>%
+    assert_string(min.chars = 1, null.ok = T)
 
   if (an_area$gridded){
     "Nothing to do, the grid over study area already exists." %>%
@@ -54,8 +66,16 @@ make_grid <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, di
 #' @export
 make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
-    check_class(an_area$study_area, "SpatialPolygons"),
-    check_class(an_area$study_area, "SpatialLines")
+    an_area$study_area %>%
+      check_class(
+        "SpatialPolygons",
+        msg = "A study area (an_area) must be an object of SpatialPolygons* class."
+      ),
+    an_area$study_area %>%
+      check_class(
+        "SpatialLines",
+        msg = "A study area (an_area) must be an object of SpatialLines* class."
+      )
   )
 
   an_area$gridded <- T
@@ -137,8 +157,10 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, sdm_area_name =
 #' @keywords internal
 .sp_make_grid <- function(an_area = NULL, var_names = NULL, resolution = NULL){
   assert(
-    check_class(an_area, "SpatialPolygons"),
-    check_class(an_area, "SpatialLines"),
+    an_area %>%
+      check_class("SpatialPolygons"),
+    an_area %>%
+      check_class("SpatialLines"),
     msg = "A modeling area (an_area) must be an object of SpatialLines class or SpatialPolygons class."
   )
   resolution %>%
@@ -147,8 +169,17 @@ make_grid.SDM_area <- function(an_area = NULL, var_names = NULL, sdm_area_name =
       msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
     )
   assert(
-    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
 
   var_found <- an_area %>%
