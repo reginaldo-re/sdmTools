@@ -36,22 +36,45 @@
 #'
 merge_area <- function(an_area = NULL, to_merge_area = NULL, var_names = NULL, sdm_area_name = NULL, dir_path = NULL){
   assert(
-    check_file_exists(to_merge_area),
-    check_directory_exists(to_merge_area),
-    check_class(to_merge_area, "RasterLayer"),
-    check_class(to_merge_area, "RasterStack"),
-    check_class(to_merge_area, "RasterBrick")
+    nested_check(
+      to_merge_area %>%
+        check_file_exists(),
+      to_merge_area %>%
+        check_directory_exists(),
+      msg = "An area to be merged (to_merge_area) to a study area (an_area) must be a file or a directory containing vect or raster files."
+    ),
+    nested_check(
+      to_merge_area %>%
+        check_class("RasterLayer"),
+      to_merge_area %>%
+        check_class("RasterStack"),
+      to_merge_area %>%
+        check_class("RasterBrick"),
+      msg = "An area to be merged (to_merge_area) to a study area (an_area) must be an object of class RasterLayer, RasterStack or RasterBrick."
+    )
   )
   assert(
-    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
-  assert_string(sdm_area_name, min.chars = 1, null.ok = T)
-  assert_string(dir_path, min.chars = 1, null.ok = T)
-  assert_true(
-    an_area$scenarios %>% is.null(),
-    msg = "It is not possible to merge an area in a sdm_area when scenarios is not null! Please assign null to scenario."
-  )
+  sdm_area_name %>%
+    assert_string(min.chars = 1, null.ok = T)
+  dir_path %>%
+    assert_string(min.chars = 1, null.ok = T)
+  an_area$scenarios %>%
+    is.null() %>%
+    assert_true(
+      msg = "It is not possible to merge an area in a sdm_area when scenarios is not null! Please assign null to scenario."
+    )
 
   UseMethod("merge_area", an_area)
 }
@@ -75,11 +98,10 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
     )
 
   an_area <- an_area %>%
-      save_gpkg(
-        sdm_area_name = sdm_area_name,
-        dir_path = dir_path
-      )
-
+    save_gpkg(
+      sdm_area_name = sdm_area_name,
+      dir_path = dir_path
+    )
 
   return(an_area)
 }
@@ -88,24 +110,52 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
 #' @keywords internal
 .sp_merge_area <-function(an_area = NULL, to_merge_area = NULL, var_names = NULL, resolution = NULL){
   assert(
-    check_class(an_area, "SpatialPolygonsDataFrame"),
-    check_class(an_area, "SpatialLinesDataFrame")
+    an_area %>%
+      check_class(
+        "SpatialPolygonsDataFrame",
+        msg = "A study area (an_area) must be an object of SpatialPolygonsDataFrame class."
+      ),
+    an_area %>%
+      check_class(
+        "SpatialLinesDataFrame",
+        msg = "A study area (an_area) must be an object of SpatialLinesDataFrame class."
+      )
   )
   assert(
-    check_file_exists(to_merge_area),
-    check_directory_exists(to_merge_area),
-    check_class(to_merge_area, "RasterLayer"),
-    check_class(to_merge_area, "RasterStack"),
-    check_class(to_merge_area, "RasterBrick")
+    nested_check(
+      to_merge_area %>%
+        check_file_exists(),
+      to_merge_area %>%
+        check_directory_exists(),
+      msg = "An area to be merged (to_merge_area) to a study area (an_area) must be a file or a directory containing vect or raster files."
+    ),
+    nested_check(
+      to_merge_area %>%
+        check_class("RasterLayer"),
+      to_merge_area %>%
+        check_class("RasterStack"),
+      to_merge_area %>%
+        check_class("RasterBrick"),
+      msg = "An area to be merged (to_merge_area) to a study area (an_area) must be an object of class RasterLayer, RasterStack or RasterBrick."
+    )
   )
   assert(
-    check_list(var_names, types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T),
-    check_character(var_names, any.missing = F, all.missing = T, unique = T, null.ok = T)
+    msg = "The variable names argument (var_names) should be NULL to select all available variables or at least one of the following options:",
+    var_names %>%
+      check_list(
+        types = "character", any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "a vector/list of non duplicated strings to be selected."
+      ),
+    var_names %>%
+      check_character(
+        any.missing = F, all.missing = T, unique = T, null.ok = T,
+        msg = "an empty list/vector to select none variable."
+      )
   )
   resolution %>%
     assert_number(
       lower = 0.0001,
-      msg = "A modeling area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
+      msg = "A study area (an_area) must have a resolution (resolution) expressed according to the EPSG code of the area."
     )
 
   var_found <- to_merge_area %>%
@@ -114,7 +164,7 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   var_found %>%
     is_empty() %>%
     assert_false(
-      msg = "None variables found in to_merge_area."
+      msg = "None variable found in to_merge_area."
     )
 
   var_not_found <- var_names %>%
@@ -154,10 +204,13 @@ merge_area.SDM_area <- function(an_area = NULL, to_merge_area = NULL, var_names 
   }
 
   assert(
-      check_false(raster_list %>% length() != var_names %>% length()),
-      check_false(raster_list %>% is.null()),
-      combine = "and",
-      msg = "At least one variable name is ambiguous. Try to use more specific variable names."
+    (raster_list %>% length() != var_names %>% length()) %>%
+      check_false(),
+    raster_list %>%
+      is.null() %>%
+      check_false(),
+    combine = "and",
+    msg = "At least one variable name is ambiguous. Try to use more specific variable names."
   )
   #if (raster_list %>% length() != var_names %>% length() || raster_list %>% is.null()){
   #  "At least one variable name is ambiguous. Try to use more specific variable names." %>%
