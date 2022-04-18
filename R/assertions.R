@@ -119,15 +119,20 @@ assert <- function(..., msg = NULL, combine = "or"){
       )
   }
 
-  if ((results_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
-    return(T)
+  if (combine == "or"){
+    if ((results_check_calls %>% map(is.logical) %>% unlist() == T) %>% any()){
+      return(T)
+    }
   } else {
-    results_check_calls <- results_check_calls %>%
-      discard(is.logical)
-
-    c(msg, results_check_calls %>% unlist()) %>%
-      abort()
+    if ((results_check_calls %>% map(is.logical) %>% unlist() == T) %>% all()){
+      return(T)
+    }
   }
+  results_check_calls <- results_check_calls %>%
+    discard(is.logical)
+
+  c(msg, results_check_calls %>% unlist()) %>%
+    abort()
 }
 
 check_string <- function(..., msg = NULL){

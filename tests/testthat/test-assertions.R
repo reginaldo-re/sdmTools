@@ -250,7 +250,7 @@ describe("Given the function to make a assertion", {
     )
   })
 
-  it("When use a deep combination of 'or' and 'and' on a valid nested check, then I expect then I expect a combined error message.", {
+  it("When use a deep combination of 'or' and 'and' on a invalid nested check, then I expect then I expect a combined error message.", {
     expect_error(
       assert(
         nested_check(
@@ -271,10 +271,36 @@ describe("Given the function to make a assertion", {
           ),
           combine = "and"
         ),
-        combine = "or",
+        combine = "and",
         msg = "Assertion error."
       ),
       "Assertion error.\nFourth nested message."
     )
+  })
+
+  it("When use a deep combination of 'or' and 'and' on a valid nested check, then I expect then I expect a combined error message.", {
+    result <- assert(
+      nested_check(
+        check_string("a", msg = "Not showed message."),
+        check_int("a", msg = "First nested message."),
+        nested_check(
+          check_string("a", msg = "Not showed message."),
+          check_int("a", msg = "Second nested message."),
+        )
+      ),
+      nested_check(
+        check_string("a", msg = "Not showed message."),
+        check_int(1, msg = "Third nested message."),
+        nested_check(
+          check_string("a", msg = "Not showed message."),
+          check_int("1", msg = "Fourth nested message."),
+          combine = "and"
+        ),
+        combine = "and"
+      ),
+      combine = "or",
+      msg = "Assertion error."
+    )
+    expect_true(result)
   })
 })

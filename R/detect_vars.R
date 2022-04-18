@@ -186,11 +186,11 @@ detect_vars.character <- function(an_area = NULL, var_names = NULL){
       paste("a vector/list of non duplicated strings represeting all available variable names."),
     an_area_names %>%
       check_list(
-        types = "character", any.missing = F, all.missing = F, unique = T,
+        types = "character", any.missing = F, all.missing = T, unique = T,
       ),
     an_area_names %>%
       check_character(
-        any.missing = F, all.missing = F, unique = T,
+        any.missing = F, all.missing = T, unique = T,
       )
   )
   assert(

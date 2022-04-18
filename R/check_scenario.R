@@ -109,7 +109,7 @@ check_scenario.character <- function(a_scenario = NULL){
     check_false(file_list %>% length() > 0 && dir_list %>% length() > 0),
     check_false(file_list %>% length() == 0 && dir_list %>% length() == 0),
     combine = "and",
-    msg = "Invalid scenario folder. Scenario folder must contains hierarchically a file or a list of files."
+    msg = "Invalid scenario folder. Scenario folder must contains hierarchically folders with files or a list of files."
   )
   # if ((file_list %>% length() > 0 && dir_list %>% length() > 0) || (file_list %>% length() == 0 && dir_list %>% length() == 0)){
   #   "Invalid scenario folder. Scenario folder must contains hierarchically a file or a list of files." %>%
